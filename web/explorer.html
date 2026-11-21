@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API Explorer — MF Data API</title>
+  <meta name="description" content="Try the MF Data API in your browser: query schemes, NAV history, latest NAVs and dataset statistics.">
+  <meta name="theme-color" content="#060b16">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="MF Data API home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+          </svg>
+        </span>
+        <span>MF Data API<small>Indian mutual fund NAV</small></span>
+      </a>
+      <nav class="nav-links" id="site-nav" aria-label="Main navigation">
+        <a href="index.html#features">Features</a>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">Explorer</a>
+        <a href="status.html">Status</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-ghost btn-sm" data-swagger href="/api/docs">Swagger UI</a>
+        <a class="btn btn-primary btn-sm" href="docs.html">Read docs</a>
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="site-nav">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="docs-hero">
+      <div class="container">
+        <span class="eyebrow">Interactive API explorer</span>
+        <h1>Try the API live</h1>
+        <p>
+          Build a request, send it, and inspect the JSON response. The explorer uses
+          the same origin as this site, so it works in both live-service and static
+          modes. No key required.
+        </p>
+      </div>
+    </section>
+
+    <div class="container explorer-wrap">
+      <div class="explorer-grid">
+        <section class="panel" aria-labelledby="request-heading">
+          <div class="panel-head">
+            <h2 id="request-heading">Request</h2>
+            <span class="pill">GET</span>
+          </div>
+          <div class="panel-body">
+            <form id="explorer-form">
+              <div class="field">
+                <label for="endpoint-select">Endpoint</label>
+                <select id="endpoint-select">
+                  <option value="latest">GET /mf/{code}/latest — latest NAV</option>
+                  <option value="history">GET /mf/{code} — NAV history</option>
+                  <option value="search">GET /mf/search — search schemes</option>
+                  <option value="list">GET /mf — all schemes</option>
+                  <option value="meta">GET /mf/{code}/meta — scheme metadata</option>
+                  <option value="allLatest">GET /mf/latest — all latest NAVs</option>
+                  <option value="houses">GET /fund-houses — fund houses</option>
+                  <option value="categories">GET /categories — categories</option>
+                  <option value="navDate">GET /nav/{date} — NAVs by date</option>
+                  <option value="stats">GET /stats — dataset statistics</option>
+                  <option value="health">GET /health — health check</option>
+                </select>
+              </div>
+
+              <div class="field" id="wrap-code">
+                <label for="field-code">Scheme code</label>
+                <input id="field-code" name="code" type="text" inputmode="numeric" placeholder="125497" value="125497">
+              </div>
+
+              <div class="field" id="wrap-q" hidden>
+                <label for="field-q">Search query</label>
+                <input id="field-q" name="q" type="search" placeholder="hdfc">
+              </div>
+
+              <div class="field" id="wrap-date" hidden>
+                <label for="field-date">NAV date</label>
+                <input id="field-date" name="date" type="date">
+              </div>
+
+              <div class="field-row">
+                <div class="field" id="wrap-limit" hidden>
+                  <label for="field-limit">Limit</label>
+                  <input id="field-limit" name="limit" type="number" min="1" placeholder="100">
+                </div>
+                <div class="field" id="wrap-offset" hidden>
+                  <label for="field-offset">Offset</label>
+                  <input id="field-offset" name="offset" type="number" min="0" placeholder="0">
+                </div>
+              </div>
+
+              <div class="field-row">
+                <div class="field" id="wrap-start" hidden>
+                  <label for="field-start">Start date</label>
+                  <input id="field-start" name="startDate" type="date">
+                </div>
+                <div class="field" id="wrap-end" hidden>
+                  <label for="field-end">End date</label>
+                  <input id="field-end" name="endDate" type="date">
+                </div>
+              </div>
+
+              <p class="request-url" id="request-url">Choose an endpoint to build a request.</p>
+              <button class="btn btn-primary" id="send-request" type="submit" style="width:100%">Send request</button>
+            </form>
+
+            <div style="margin-top:22px;border-top:1px solid var(--border-soft);padding-top:16px">
+              <p class="text-sm muted" style="margin:0 0 8px">Try an example:</p>
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <a class="copy-btn" href="explorer.html?endpoint=latest&code=125497">Latest NAV</a>
+                <a class="copy-btn" href="explorer.html?endpoint=history&code=125497">History</a>
+                <a class="copy-btn" href="explorer.html?endpoint=search&q=hdfc">Search HDFC</a>
+                <a class="copy-btn" href="explorer.html?endpoint=stats">Stats</a>
+                <a class="copy-btn" href="explorer.html?endpoint=houses">Fund houses</a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="response-heading">
+          <div class="panel-head">
+            <h2 id="response-heading">Response</h2>
+            <div style="display:flex;gap:8px">
+              <button class="copy-btn" id="copy-response" type="button">Copy</button>
+              <button class="copy-btn" id="download-response" type="button">Download</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="response-meta" id="response-meta">
+              <span class="status-dot"></span> Send a request to see the response.
+            </div>
+            <pre class="response-code" id="response-body">// JSON response will appear here.</pre>
+          </div>
+        </section>
+      </div>
+
+      <section class="section-tight" style="padding-bottom:0">
+        <div class="section-head" style="margin-bottom:18px">
+          <h2 style="font-size:1.35rem">Need a different shape?</h2>
+          <p>
+            Use <a href="docs.html#endpoint-list">query filters</a> to narrow the
+            scheme list, or <a href="docs.html#self-hosting">self-host</a> the API and
+            query SQLite directly for bulk analytics.
+          </p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Common task</th><th>Request</th></tr></thead>
+            <tbody>
+              <tr><td>Latest NAV for one scheme</td><td><code>/api/v1/mf/125497/latest</code></td></tr>
+              <tr><td>Last year of history</td><td><code>/api/v1/mf/125497?startDate=2025-11-20</code></td></tr>
+              <tr><td>Find all HDFC schemes</td><td><code>/api/v1/mf/search?q=hdfc</code></td></tr>
+              <tr><td>Every scheme in a category</td><td><code>/api/v1/mf?category=Equity%20Scheme%20-%20Small%20Cap%20Fund</code></td></tr>
+              <tr><td>All NAVs published on a date</td><td><code>/api/v1/nav/20-11-2026?limit=100</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="index.html">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+            </svg>
+          </span>
+          <span>MF Data API<small>Indian mutual fund NAV</small></span>
+        </a>
+        <p>Free and open JSON access to Indian mutual fund NAV data, built from the official AMFI India feed.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">API explorer</a>
+        <a href="status.html">Status</a>
+      </div>
+      <div class="footer-col">
+        <h4>API</h4>
+        <a href="docs.html#endpoint-list">All schemes</a>
+        <a href="docs.html#endpoint-history">NAV history</a>
+        <a href="docs.html#static-mode">Static JSON</a>
+      </div>
+      <div class="footer-col">
+        <h4>Data</h4>
+        <a href="https://www.amfiindia.com/net-asset-value/nav-download" rel="noopener">AMFI India source</a>
+        <a href="docs.html#updates">Update schedule</a>
+        <a href="docs.html#license">License &amp; attribution</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <span>© <span data-year>2026</span> MF Data API. Data sourced from AMFI India.</span>
+      <span><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · Not affiliated with AMFI or any AMC.</span>
+    </div>
+  </footer>
+
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

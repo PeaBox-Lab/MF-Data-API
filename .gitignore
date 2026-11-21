@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local data / build output
+data/*.db
+data/*.db-*
+data/raw/*.txt
+data/raw/*.txt.gz
+data/status.json
+public/
+site/
+
+# Environment
+.env
+.env.local
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

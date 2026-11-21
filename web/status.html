@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Status — MF Data API</title>
+  <meta name="description" content="Current dataset freshness and service status for MF Data API.">
+  <meta name="theme-color" content="#060b16">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="MF Data API home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+          </svg>
+        </span>
+        <span>MF Data API<small>Indian mutual fund NAV</small></span>
+      </a>
+      <nav class="nav-links" id="site-nav" aria-label="Main navigation">
+        <a href="index.html#features">Features</a>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">Explorer</a>
+        <a href="status.html">Status</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-ghost btn-sm" data-swagger href="/api/docs">Swagger UI</a>
+        <a class="btn btn-primary btn-sm" href="explorer.html">Try it</a>
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="site-nav">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="docs-hero">
+      <div class="container">
+        <span class="eyebrow">Service status</span>
+        <h1>Dataset &amp; API health</h1>
+        <p>Freshness of the NAV dataset and availability of the API endpoints. Data is refreshed twice a day from AMFI India.</p>
+      </div>
+    </section>
+
+    <div class="container" style="padding:36px 0 70px">
+      <div class="status-banner" id="status-banner">
+        <span class="big-dot" aria-hidden="true"></span>
+        <div>
+          <strong>Checking status…</strong>
+          <span id="status-banner-text">Loading the latest dataset information.</span>
+        </div>
+      </div>
+
+      <div class="status-grid">
+        <div class="status-card">
+          <span class="label">Latest NAV date</span>
+          <span class="value" data-status-field="latest">—</span>
+        </div>
+        <div class="status-card">
+          <span class="label">Schemes</span>
+          <span class="value" data-status-field="schemes">—</span>
+        </div>
+        <div class="status-card">
+          <span class="label">NAV rows</span>
+          <span class="value" data-status-field="rows">—</span>
+        </div>
+        <div class="status-card">
+          <span class="label">Last sync</span>
+          <span class="value" style="font-size:1rem" data-status-field="generated">—</span>
+        </div>
+        <div class="status-card">
+          <span class="label">Data source</span>
+          <span class="value" style="font-size:1rem" data-status-field="source">AMFI India</span>
+        </div>
+        <div class="status-card">
+          <span class="label">API state</span>
+          <span class="value" data-status-field="status">—</span>
+        </div>
+      </div>
+
+      <section class="section-tight">
+        <div class="section-head" style="margin-bottom:18px">
+          <h2 style="font-size:1.4rem">Endpoint checks</h2>
+          <p>These links exercise the same endpoints the explorer uses.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Check</th><th>Endpoint</th><th>Expected</th></tr></thead>
+            <tbody>
+              <tr><td>Dataset statistics</td><td><a data-static-href="api/v1/stats.json" href="api/v1/stats"><code>/api/v1/stats</code></a></td><td>HTTP 200, JSON</td></tr>
+              <tr data-live-only><td>Health</td><td><a href="api/v1/health"><code>/api/v1/health</code></a></td><td>HTTP 200, <code>"status": "ok"</code></td></tr>
+              <tr><td>Scheme list</td><td><a data-static-href="api/v1/mf.json" href="api/v1/mf?limit=1"><code>/api/v1/mf?limit=1</code></a></td><td>One scheme</td></tr>
+              <tr><td>Latest NAV</td><td><a data-static-href="api/v1/mf/125497/latest.json" href="api/v1/mf/125497/latest"><code>/api/v1/mf/125497/latest</code></a></td><td>One observation</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-sm muted" style="margin-top:14px">
+          On a static deployment, the health endpoint is not available; use
+          <code>/api/v1/stats.json</code> to check the dataset date.
+        </p>
+      </section>
+
+      <section class="section-tight">
+        <div class="section-head" style="margin-bottom:18px">
+          <h2 style="font-size:1.4rem">Incident history</h2>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">No incidents reported</h3>
+          <p>The scheduled workflow updates the dataset twice daily. If AMFI is unavailable, the previous dataset stays online and the next run retries automatically.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="index.html">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+            </svg>
+          </span>
+          <span>MF Data API<small>Indian mutual fund NAV</small></span>
+        </a>
+        <p>Free and open JSON access to Indian mutual fund NAV data, built from the official AMFI India feed.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">API explorer</a>
+        <a href="status.html">Status</a>
+      </div>
+      <div class="footer-col">
+        <h4>API</h4>
+        <a href="docs.html#endpoint-list">All schemes</a>
+        <a href="docs.html#endpoint-history">NAV history</a>
+        <a href="docs.html#static-mode">Static JSON</a>
+      </div>
+      <div class="footer-col">
+        <h4>Data</h4>
+        <a href="https://www.amfiindia.com/net-asset-value/nav-download" rel="noopener">AMFI India source</a>
+        <a href="docs.html#updates">Update schedule</a>
+        <a href="docs.html#license">License &amp; attribution</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <span>© <span data-year>2026</span> MF Data API. Data sourced from AMFI India.</span>
+      <span><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · Not affiliated with AMFI or any AMC.</span>
+    </div>
+  </footer>
+
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Categories — MF Data API</title>
+  <meta name="description" content="Browse Indian mutual fund scheme categories (equity, debt, hybrid, etc.) with scheme counts.">
+  <meta name="theme-color" content="#060b16">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="MF Data API home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+          </svg>
+        </span>
+        <span>MF Data API<small>Indian mutual fund NAV</small></span>
+      </a>
+      <nav class="nav-links" id="site-nav" aria-label="Main navigation">
+        <a href="index.html#features">Features</a>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">Explorer</a>
+        <a href="schemes.html">Schemes</a>
+        <a href="fund-houses.html">Fund Houses</a>
+        <a href="categories.html" aria-current="page">Categories</a>
+        <a href="status.html">Status</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-ghost btn-sm" data-swagger href="/api/docs">Swagger UI</a>
+        <a class="btn btn-primary btn-sm" href="explorer.html">Try it</a>
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="site-nav">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="docs-hero">
+      <div class="container">
+        <span class="eyebrow">Browse by category</span>
+        <h1>Scheme categories</h1>
+        <p>Explore mutual fund categories by type (equity, debt, hybrid, solution-oriented, etc.) with scheme counts.</p>
+      </div>
+    </section>
+
+    <div class="container" style="padding:30px 0 80px">
+      <div class="search-shell" style="margin-bottom:24px">
+        <div class="field" style="max-width:400px">
+          <label for="cat-search">Search categories</label>
+          <input id="cat-search" type="search" placeholder="e.g., Equity, Debt, ELSS, Liquid" autocomplete="off">
+        </div>
+        <p class="search-hint" style="margin-top:8px">
+          Type to filter. Categories are grouped by scheme type (Open/Close/Interval).
+        </p>
+      </div>
+
+      <div id="loading-cats" class="text-sm muted" style="display:none;text-align:center;padding:16px">
+        Loading categories…
+      </div>
+
+      <div id="categories-container"></div>
+
+      <div id="empty-cats" class="text-sm muted" style="display:none;text-align:center;padding:24px">
+        No categories match your search.
+      </div>
+
+      <div class="note" style="margin-top:24px;max-width:800px">
+        <strong>Data source:</strong> AMFI India (<a href="https://www.amfiindia.com/net-asset-value/nav-download" rel="noopener">NAV download page</a>).
+        Categories follow AMFI's official classification (SEBI categorisation).
+        <br><br>
+        <strong>API access:</strong> <code>GET /api/v1/categories</code> returns the full list as JSON.
+        Filter schemes by category with <code>GET /api/v1/mf?category=Equity%20Scheme%20-%20Large%20Cap%20Fund</code>.
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="index.html">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+            </svg>
+          </span>
+          <span>MF Data API<small>Indian mutual fund NAV</small></span>
+        </a>
+        <p>Free and open JSON access to Indian mutual fund NAV data, built from the official AMFI India feed.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">API explorer</a>
+        <a href="status.html">Status</a>
+        <a href="about.html">About</a>
+      </div>
+      <div class="footer-col">
+        <h4>API</h4>
+        <a href="docs.html#endpoint-list">All schemes</a>
+        <a href="docs.html#endpoint-history">NAV history</a>
+        <a href="docs.html#static-mode">Static JSON</a>
+      </div>
+      <div class="footer-col">
+        <h4>Data</h4>
+        <a href="https://www.amfiindia.com/net-asset-value/nav-download" rel="noopener">AMFI India source</a>
+        <a href="docs.html#updates">Update schedule</a>
+        <a href="docs.html#license">License & attribution</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <span>© <span data-year>2026</span> MF Data API. Data sourced from AMFI India.</span>
+      <span><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · Not affiliated with AMFI or any AMC.</span>
+    </div>
+  </footer>
+
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+  <script>
+(() => {
+  const STATIC = (() => {
+    const cfg = Object.assign({ mode: "server", apiBase: "/api/v1", repoUrl: "" }, window.MFDATA_CONFIG || {});
+    return cfg.mode === "static" || location.protocol === "file:" || !String(cfg.apiBase || "").startsWith("/");
+  })();
+  const BASE = String((window.MFDATA_CONFIG && window.MFDATA_CONFIG.apiBase) || "/api/v1").replace(/\/+$/, "");
+
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+  const nf = new Intl.NumberFormat("en-IN");
+
+  const searchInput = $("#cat-search");
+  const container = $("#categories-container");
+  const loading = $("#loading-cats");
+  const emptyState = $("#empty-cats");
+
+  let allCategories = [];
+  let debounceTimer = null;
+
+  function apiUrl(path) {
+    return new URL(BASE + path, document.baseURI);
+  }
+
+  async function fetchJson(url) {
+    const resp = await fetch(url, { headers: { Accept: "application/json" } });
+    const text = await resp.text();
+    try { return { ok: resp.ok, data: text ? JSON.parse(text) : null }; }
+    catch { return { ok: resp.ok, data: text }; }
+  }
+
+  async function loadCategories() {
+    loading.style.display = "block";
+    emptyState.style.display = "none";
+    container.innerHTML = "";
+    try {
+      const url = STATIC ? apiUrl("/categories.json") : apiUrl("/categories");
+      const { ok, data } = await fetchJson(url);
+      if (!ok || !Array.isArray(data)) throw new Error("Failed to fetch categories");
+      allCategories = data;
+      renderCategories(allCategories);
+    } catch (err) {
+      console.error(err);
+      emptyState.textContent = "Failed to load categories. Please try again.";
+      emptyState.style.display = "block";
+    } finally {
+      loading.style.display = "none";
+    }
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, s => ({ "&": "&", "<": "<", ">": ">", '"': """, "'": "'" }[s]));
+  }
+
+  function renderCategories(cats) {
+    container.innerHTML = "";
+    if (cats.length === 0) {
+      emptyState.style.display = "block";
+      return;
+    }
+    // Group by scheme type
+    const byType = {};
+    cats.forEach(c => {
+      const type = c.schemeType || "Other";
+      if (!byType[type]) byType[type] = [];
+      byType[type].push(c);
+    });
+
+    Object.entries(byType).forEach(([type, list]) => {
+      const section = document.createElement("section");
+      section.style.marginBottom = "32px";
+      const h3 = document.createElement("h3");
+      h3.textContent = type;
+      h3.style.marginBottom = "12px";
+      h3.style.color = "var(--accent)";
+      h3.style.fontSize = "1.1rem";
+      section.appendChild(h3);
+
+      const grid = document.createElement("div");
+      grid.style.display = "grid";
+      grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(320px, 1fr))";
+      grid.style.gap = "12px";
+
+      list.forEach(c => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.style.padding = "16px 20px";
+        card.style.cursor = "pointer";
+        card.style.transition = "background 0.15s, border-color 0.15s";
+        card.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <div>
+              <strong style="display:block;margin-bottom:4px">${escapeHtml(c.schemeCategory)}</strong>
+              <span class="text-sm muted">${escapeHtml(c.schemeType)}</span>
+            </div>
+            <code style="font-size:1.2rem;color:var(--accent)">${nf.format(c.schemeCount)}</code>
+          </div>
+          <div class="text-sm muted" style="margin-top:8px">${nf.format(c.schemeCount)} schemes</div>
+        `;
+        card.onclick = () => {
+          const params = new URLSearchParams({ category: c.schemeCategory });
+          window.open(`schemes.html?${params.toString()}`, "_blank", "noopener");
+        };
+        card.onmouseenter = () => card.style.background = "var(--surface-2)";
+        card.onmouseleave = () => card.style.background = "";
+        grid.appendChild(card);
+      });
+      section.appendChild(grid);
+      container.appendChild(section);
+    });
+  }
+
+  function debouncedFilter() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      const q = searchInput.value.trim().toLowerCase();
+      const filtered = allCategories.filter(c =>
+        c.schemeCategory.toLowerCase().includes(q) ||
+        c.schemeType.toLowerCase().includes(q)
+      );
+      renderCategories(filtered);
+    }, 150);
+  }
+
+  searchInput.addEventListener("input", debouncedFilter);
+  loadCategories();
+})();
+  </script>
+</body>
+</html>

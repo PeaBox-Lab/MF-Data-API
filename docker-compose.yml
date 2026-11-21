@@ -1,0 +1,26 @@
+services:
+  api:
+    build: .
+    image: mfdata-api:latest
+    container_name: mfdata-api
+    ports:
+      - "8000:8000"
+    environment:
+      MFDATA_DATA_DIR: /data
+      MFDATA_AUTO_SYNC: "1"
+      MFDATA_BOOTSTRAP_DAYS: "1095"
+      MFDATA_RATE_LIMIT: "120"
+      MFDATA_RATE_WINDOW: "60"
+      MFDATA_CORS_ORIGINS: "*"
+    volumes:
+      - mfdata:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+volumes:
+  mfdata:

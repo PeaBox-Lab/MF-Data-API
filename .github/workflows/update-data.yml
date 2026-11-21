@@ -1,0 +1,118 @@
+name: Update NAV data
+
+on:
+  schedule:
+    # GitHub cron is UTC. 04:15 UTC = 09:45 IST, 16:45 UTC = 22:15 IST.
+    - cron: "15 4 * * *"
+    - cron: "45 16 * * *"
+  workflow_dispatch:
+    inputs:
+      bootstrap_days:
+        description: "History depth for a fresh database (days)"
+        required: false
+        default: "1095"
+      force_full:
+        description: "Force a full history backfill"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: update-nav-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Fetch AMFI data and build the site
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      BOOTSTRAP_DAYS: ${{ inputs.bootstrap_days || '1095' }}
+      FORCE_FULL: ${{ inputs.force_full || 'false' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Restore NAV database
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            data/mfdata.db
+            data/mfdata.db-wal
+            data/mfdata.db-shm
+          key: mfdata-db-${{ github.run_id }}
+          restore-keys: |
+            mfdata-db-
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Sync AMFI NAV data
+        run: |
+          set -euo pipefail
+          EXTRA=""
+          if [ "${FORCE_FULL}" = "true" ]; then EXTRA="--full"; fi
+          python -m pipeline sync --bootstrap-days "${BOOTSTRAP_DAYS}" ${EXTRA}
+
+      - name: Export static API and documentation site
+        run: |
+          set -euo pipefail
+          python -m pipeline export --out public
+          python scripts/build_site.py \
+            --out public \
+            --repo-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+
+      - name: Save NAV database
+        if: always() && hashFiles('data/mfdata.db') != ''
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            data/mfdata.db
+            data/mfdata.db-wal
+            data/mfdata.db-shm
+          key: mfdata-db-${{ github.run_id }}
+
+      - name: Commit dataset status
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f data/status.json
+          if git diff --cached --quiet; then
+            echo "No status changes to commit."
+          else
+            git commit -m "chore(data): update NAV snapshot $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    name: Deploy GitHub Pages
+    needs: update
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

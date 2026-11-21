@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fund Houses — MF Data API</title>
+  <meta name="description" content="Browse all Indian mutual fund houses (AMCs) with scheme counts and links to their schemes.">
+  <meta name="theme-color" content="#060b16">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="MF Data API home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+          </svg>
+        </span>
+        <span>MF Data API<small>Indian mutual fund NAV</small></span>
+      </a>
+      <nav class="nav-links" id="site-nav" aria-label="Main navigation">
+        <a href="index.html#features">Features</a>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">Explorer</a>
+        <a href="schemes.html">Schemes</a>
+        <a href="fund-houses.html" aria-current="page">Fund Houses</a>
+        <a href="status.html">Status</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-ghost btn-sm" data-swagger href="/api/docs">Swagger UI</a>
+        <a class="btn btn-primary btn-sm" href="explorer.html">Try it</a>
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="site-nav">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="docs-hero">
+      <div class="container">
+        <span class="eyebrow">Browse by AMC</span>
+        <h1>Fund houses (Asset Management Companies)</h1>
+        <p>Explore all 55+ Indian mutual fund houses. Click a fund house to see its schemes and latest NAVs.</p>
+      </div>
+    </section>
+
+    <div class="container" style="padding:30px 0 80px">
+      <div class="search-shell" style="margin-bottom:24px">
+        <div class="field" style="max-width:400px">
+          <label for="house-search">Search fund houses</label>
+          <input id="house-search" type="search" placeholder="e.g., HDFC, SBI, Axis" autocomplete="off">
+        </div>
+        <p class="search-hint" style="margin-top:8px">
+          Type to filter the list. Click a fund house to view its schemes.
+        </p>
+      </div>
+
+      <div class="table-wrap" style="margin-bottom:16px">
+        <table id="houses-table">
+          <thead>
+            <tr>
+              <th>Fund house</th>
+              <th style="width:140px;text-align:right">Schemes</th>
+              <th style="width:140px"></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div id="loading-houses" class="text-sm muted" style="display:none;text-align:center;padding:16px">
+        Loading fund houses…
+      </div>
+      <div id="empty-houses" class="text-sm muted" style="display:none;text-align:center;padding:24px">
+        No fund houses match your search.
+      </div>
+
+      <div class="note" style="margin-top:24px;max-width:800px">
+        <strong>Data source:</strong> AMFI India (<a href="https://www.amfiindia.com/net-asset-value/nav-download" rel="noopener">NAV download page</a>).
+        Fund house names and scheme counts are derived from AMFI's official NAV feeds.
+        <br><br>
+        <strong>API access:</strong> <code>GET /api/v1/fund-houses</code> returns the full list as JSON.
+        Use <code>GET /api/v1/fund-houses/{name}/schemes</code> to get schemes for a specific AMC.
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="index.html">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+            </svg>
+          </span>
+          <span>MF Data API<small>Indian mutual fund NAV</small></span>
+        </a>
+        <p>Free and open JSON access to Indian mutual fund NAV data, built from the official AMFI India feed.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">API explorer</a>
+        <a href="status.html">Status</a>
+        <a href="about.html">About</a>
+      </div>
+      <div class="footer-col">
+        <h4>API</h4>
+        <a href="docs.html#endpoint-list">All schemes</a>
+        <a href="docs.html#endpoint-history">NAV history</a>
+        <a href="docs.html#static-mode">Static JSON</a>
+      </div>
+      <div class="footer-col">
+        <h4>Data</h4>
+        <a href="https://www.amfiindia.com/net-asset-value/nav-download" rel="noopener">AMFI India source</a>
+        <a href="docs.html#updates">Update schedule</a>
+        <a href="docs.html#license">License & attribution</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <span>© <span data-year>2026</span> MF Data API. Data sourced from AMFI India.</span>
+      <span><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · Not affiliated with AMFI or any AMC.</span>
+    </div>
+  </footer>
+
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+  <script>
+(() => {
+  const STATIC = (() => {
+    const cfg = Object.assign({ mode: "server", apiBase: "/api/v1", repoUrl: "" }, window.MFDATA_CONFIG || {});
+    return cfg.mode === "static" || location.protocol === "file:" || !String(cfg.apiBase || "").startsWith("/");
+  })();
+  const BASE = String((window.MFDATA_CONFIG && window.MFDATA_CONFIG.apiBase) || "/api/v1").replace(/\/+$/, "");
+
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+  const nf = new Intl.NumberFormat("en-IN");
+
+  const searchInput = $("#house-search");
+  const tbody = $("#houses-table tbody");
+  const loading = $("#loading-houses");
+  const emptyState = $("#empty-houses");
+
+  let allHouses = [];
+  let debounceTimer = null;
+
+  function apiUrl(path) {
+    const url = new URL(BASE + path, document.baseURI);
+    return url;
+  }
+
+  async function fetchJson(url) {
+    const resp = await fetch(url, { headers: { Accept: "application/json" } });
+    const text = await resp.text();
+    try { return { ok: resp.ok, data: text ? JSON.parse(text) : null }; }
+    catch { return { ok: resp.ok, data: text }; }
+  }
+
+  async function loadHouses() {
+    loading.style.display = "block";
+    emptyState.style.display = "none";
+    tbody.innerHTML = "";
+    try {
+      const url = STATIC ? apiUrl("/fund-houses.json") : apiUrl("/fund-houses");
+      const { ok, data } = await fetchJson(url);
+      if (!ok || !Array.isArray(data)) throw new Error("Failed to fetch fund houses");
+      allHouses = data;
+      renderHouses(allHouses);
+    } catch (err) {
+      console.error(err);
+      emptyState.textContent = "Failed to load fund houses. Please try again.";
+      emptyState.style.display = "block";
+    } finally {
+      loading.style.display = "none";
+    }
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, s => ({ "&": "&", "<": "<", ">": ">", '"': """, "'": "'" }[s]));
+  }
+
+  function renderHouses(houses) {
+    tbody.innerHTML = "";
+    if (houses.length === 0) {
+      emptyState.style.display = "block";
+      return;
+    }
+    houses.forEach(h => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${escapeHtml(h.fundHouse)}</strong></td>
+        <td style="text-align:right"><code>${nf.format(h.schemeCount)}</code></td>
+        <td>
+          <a class="copy-btn" href="fund-house.html?name=${encodeURIComponent(h.fundHouse)}" target="_blank" rel="noopener">View schemes</a>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function debouncedFilter() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      const q = searchInput.value.trim().toLowerCase();
+      const filtered = allHouses.filter(h => h.fundHouse.toLowerCase().includes(q));
+      renderHouses(filtered);
+    }, 150);
+  }
+
+  searchInput.addEventListener("input", debouncedFilter);
+  loadHouses();
+})();
+  </script>
+</body>
+</html>

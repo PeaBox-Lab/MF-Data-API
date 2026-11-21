@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Documentation — MF Data API</title>
+  <meta name="description" content="Complete API reference for MF Data API: schemes, NAV history, latest NAV, fund houses, errors, rate limits, static JSON mode and self-hosting.">
+  <meta name="theme-color" content="#060b16">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="MF Data API home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+          </svg>
+        </span>
+        <span>MF Data API<small>Indian mutual fund NAV</small></span>
+      </a>
+      <nav class="nav-links" id="site-nav" aria-label="Main navigation">
+        <a href="index.html#features">Features</a>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">Explorer</a>
+        <a href="status.html">Status</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-ghost btn-sm" data-swagger href="/api/docs">Swagger UI</a>
+        <a class="btn btn-primary btn-sm" href="explorer.html">Try it</a>
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="site-nav">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="docs-hero">
+      <div class="container">
+        <span class="eyebrow">Documentation · v1.0.0</span>
+        <h1>Mutual fund API reference</h1>
+        <p>
+          Everything you need to query Indian mutual fund schemes and NAV history.
+          The API is read-only, requires no authentication, and is available as a
+          live FastAPI service or as a tree of static JSON files.
+        </p>
+        <p class="text-sm muted" style="margin-top:14px">
+          Current mode: <strong data-mode>live FastAPI service</strong> ·
+          Base URL: <code data-api-base>/api/v1</code>
+        </p>
+      </div>
+    </section>
+
+    <div class="container docs-layout">
+      <aside class="docs-sidebar" aria-label="Documentation navigation">
+        <h4>Getting started</h4>
+        <a href="#quick-start">Quick start</a>
+        <a href="#base-url">Base URL &amp; formats</a>
+        <a href="#authentication">Authentication</a>
+        <a href="#rate-limits">Rate limits</a>
+        <a href="#updates">Data updates</a>
+
+        <h4>Endpoints</h4>
+        <a href="#endpoint-list">List schemes</a>
+        <a href="#endpoint-search">Search schemes</a>
+        <a href="#endpoint-history">NAV history</a>
+        <a href="#endpoint-latest">Latest NAV</a>
+        <a href="#endpoint-all-latest">All latest NAVs</a>
+        <a href="#endpoint-meta">Scheme metadata</a>
+        <a href="#endpoint-houses">Fund houses</a>
+        <a href="#endpoint-categories">Categories</a>
+        <a href="#endpoint-nav-date">NAVs by date</a>
+        <a href="#endpoint-stats">Statistics</a>
+        <a href="#endpoint-health">Health</a>
+
+        <h4>Guides</h4>
+        <a href="#response-format">Response format</a>
+        <a href="#errors">Errors</a>
+        <a href="#static-mode">Static JSON mode</a>
+        <a href="#self-hosting">Self-hosting</a>
+        <a href="#data-sources">Data sources</a>
+        <a href="#faq">FAQ</a>
+        <a href="#license">License</a>
+        <a href="#changelog">Changelog</a>
+      </aside>
+
+      <div class="doc-content">
+        <section class="doc-section" id="quick-start" data-doc-section>
+          <h2>Quick start</h2>
+          <p>
+            Fetch the latest NAV for a scheme with a single request. Scheme codes are
+            the official AMFI scheme codes.
+          </p>
+          <pre><code class="language-bash">curl "https://api.example.com/api/v1/mf/125497/latest"</code></pre>
+          <p>Or fetch the complete NAV history for that scheme:</p>
+          <pre><code class="language-bash">curl "https://api.example.com/api/v1/mf/125497"</code></pre>
+          <p class="text-sm muted">
+            Replace <code>https://api.example.com</code> with your deployment origin.
+            Locally that is usually <code>http://localhost:8000</code>. The same
+            endpoints also work without the <code>/api/v1</code> prefix, for example
+            <code>/mf/125497/latest</code>.
+          </p>
+
+          <h3>Python</h3>
+          <pre><code class="language-python">import httpx
+
+response = httpx.get("https://api.example.com/api/v1/mf/125497/latest", timeout=30)
+payload = response.json()
+
+print(payload["meta"]["scheme_name"])
+print(payload["data"][0])          # {'date': '20-11-2026', 'nav': '210.02130'}</code></pre>
+
+          <h3>JavaScript</h3>
+          <pre><code class="language-javascript">const res = await fetch("https://api.example.com/api/v1/mf/125497");
+if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+const { meta, data, status } = await res.json();
+console.log(meta.scheme_name, data[0]);</code></pre>
+
+          <h3>Google Sheets / Excel</h3>
+          <p>
+            Use <code>IMPORTDATA("https://api.example.com/api/v1/mf/125497")</code> for
+            a quick import, or <code>WEBSERVICE</code> with a JSON parser add-on for
+            structured access. For production use, prefer a small script that caches
+            the response.
+          </p>
+        </section>
+
+        <section class="doc-section" id="base-url" data-doc-section>
+          <h2>Base URL &amp; formats</h2>
+          <div class="table-wrap">
+            <table>
+              <tbody>
+                <tr><th>Live API base</th><td><code data-api-base>/api/v1</code></td></tr>
+                <tr><th>Compatibility base</th><td><code>/</code> (same routes without the prefix)</td></tr>
+                <tr><th>OpenAPI schema</th><td><code>/api/openapi.json</code></td></tr>
+                <tr><th>Swagger UI</th><td><code>/api/docs</code> (live service only)</td></tr>
+                <tr><th>Response format</th><td><code>application/json; charset=utf-8</code></td></tr>
+                <tr><th>Methods</th><td><code>GET</code>, <code>HEAD</code>, <code>OPTIONS</code></td></tr>
+                <tr><th>Compression</th><td>gzip when the client sends <code>Accept-Encoding: gzip</code></td></tr>
+                <tr><th>CORS</th><td>Open to all origins by default</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Dates</h3>
+          <p>
+            Dates in responses always use <code>DD-MM-YYYY</code> (for example
+            <code>20-11-2026</code>). Date inputs accept <code>YYYY-MM-DD</code>,
+            <code>DD-MM-YYYY</code> or <code>DD-Mon-YYYY</code>.
+          </p>
+          <h3>NAV values</h3>
+          <p>
+            NAV is returned as a fixed-point <strong>string</strong> with five decimal
+            places, exactly as published by AMFI (for example <code>"210.02130"</code>).
+            Keeping it as a string avoids floating-point rounding in consumers that
+            need exact values. Parse it only when you need arithmetic.
+          </p>
+        </section>
+
+        <section class="doc-section" id="authentication" data-doc-section>
+          <h2>Authentication</h2>
+          <p>
+            There is none. No API keys, tokens, cookies or registration. Every
+            endpoint is public and read-only. Please be considerate: cache responses
+            where possible and avoid polling in tight loops.
+          </p>
+          <div class="note">
+            If you expose this API publicly, keep the default rate limit enabled and
+            put it behind a CDN or reverse proxy for production traffic.
+          </div>
+        </section>
+
+        <section class="doc-section" id="rate-limits" data-doc-section>
+          <h2>Rate limits</h2>
+          <p>
+            The live service allows <strong>120 requests per minute per client IP</strong>
+            by default (configurable with <code>MFDATA_RATE_LIMIT</code> and
+            <code>MFDATA_RATE_WINDOW</code>). Every response includes:
+          </p>
+          <ul>
+            <li><code>X-RateLimit-Limit</code> — requests allowed in the window.</li>
+            <li><code>X-RateLimit-Remaining</code> — requests left in the current window.</li>
+            <li><code>Retry-After</code> — seconds to wait, on HTTP <code>429</code>.</li>
+          </ul>
+          <pre><code class="language-http">HTTP/1.1 429 Too Many Requests
+Retry-After: 23
+X-RateLimit-Limit: 120
+X-RateLimit-Remaining: 0
+
+{
+  "status": "RATE_LIMITED",
+  "message": "Rate limit exceeded (120 requests per 60s). Please retry in 23s."
+}</code></pre>
+          <p class="text-sm muted">
+            Static JSON deployments have no rate limit of their own; your CDN or
+            GitHub Pages applies its own fair-use policy.
+          </p>
+        </section>
+
+        <section class="doc-section" id="updates" data-doc-section>
+          <h2>Data updates</h2>
+          <p>
+            AMFI publishes NAVs for the previous trading day in the evening. The
+            GitHub Actions workflow runs twice a day — around <strong>10:15 IST</strong>
+            and <strong>22:15 IST</strong> — and can also be triggered manually from the
+            Actions tab.
+          </p>
+          <p>Each run:</p>
+          <ol>
+            <li>Downloads <code>NAVAll.txt</code> (latest NAVs for every scheme).</li>
+            <li>Downloads historical reports for the recent window, filling gaps and corrections.</li>
+            <li>Upserts rows into SQLite, refreshes latest-NAV columns and dataset stats.</li>
+            <li>Exports the static JSON tree and deploys the documentation site.</li>
+          </ol>
+          <p class="text-sm muted">
+            The freshest date available is exposed by <a href="#endpoint-stats">/stats</a>
+            and <a href="#endpoint-health">/health</a>. Check <a href="status.html">Status</a>
+            for the current dataset date.
+          </p>
+        </section>
+
+        <section class="doc-section" id="endpoints" data-doc-section>
+          <h2>Endpoints</h2>
+          <p>All endpoints below are available under both <code>/api/v1</code> and the site root.</p>
+        </section>
+
+        <section class="doc-section" id="endpoint-list" data-doc-section>
+          <h2>List schemes</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/mf</code></div>
+            <div class="endpoint-body">
+              <p>Returns the scheme master list. Without <code>limit</code> every scheme is returned (roughly 14,000 rows).</p>
+              <div class="table-wrap">
+                <table class="params">
+                  <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>limit</code></td><td>integer</td><td>Page size, 1–50,000. Omit for all rows.</td></tr>
+                    <tr><td><code>offset</code></td><td>integer</td><td>Rows to skip. Default 0.</td></tr>
+                    <tr><td><code>q</code></td><td>string</td><td>Optional case-insensitive name filter.</td></tr>
+                    <tr><td><code>fund_house</code></td><td>string</td><td>Exact fund house name, e.g. <code>SBI Mutual Fund</code>.</td></tr>
+                    <tr><td><code>category</code></td><td>string</td><td>Exact category, e.g. <code>Equity Scheme - Small Cap Fund</code>.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/mf?limit=2&offset=0"</code></pre>
+              <pre><code class="language-json">[
+  { "schemeCode": 100119, "schemeName": "Aditya Birla Sun Life Liquid Fund-Discipline Plan-Growth" },
+  { "schemeCode": 100121, "schemeName": "HDFC Balanced Fund - Dividend Option" }
+]</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="endpoint-search" data-doc-section>
+          <h2>Search schemes</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/mf/search?q=</code></div>
+            <div class="endpoint-body">
+              <p>Case-insensitive search across scheme names. An exact scheme code is also matched, and prefix matches rank first.</p>
+              <div class="table-wrap">
+                <table class="params">
+                  <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>q</code></td><td>string (required)</td><td>Search text, 1–100 characters.</td></tr>
+                    <tr><td><code>limit</code></td><td>integer</td><td>1–1,000. Default 100.</td></tr>
+                    <tr><td><code>offset</code></td><td>integer</td><td>Rows to skip. Default 0.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/mf/search?q=hdfc&limit=5"</code></pre>
+              <pre><code class="language-json">[
+  { "schemeCode": 100121, "schemeName": "HDFC Balanced Fund - Dividend Option" },
+  { "schemeCode": 100122, "schemeName": "HDFC Balanced Fund - Growth Option" }
+]</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="endpoint-history" data-doc-section>
+          <h2>NAV history</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/mf/{scheme_code}</code></div>
+            <div class="endpoint-body">
+              <p>Returns metadata plus every stored NAV for the scheme, newest first.</p>
+              <div class="table-wrap">
+                <table class="params">
+                  <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>scheme_code</code></td><td>integer (path)</td><td>AMFI scheme code, e.g. <code>125497</code>.</td></tr>
+                    <tr><td><code>startDate</code></td><td>string</td><td>Inclusive start date. Accepts <code>YYYY-MM-DD</code> or <code>DD-MM-YYYY</code>.</td></tr>
+                    <tr><td><code>endDate</code></td><td>string</td><td>Inclusive end date.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/mf/125497?startDate=2026-11-01&endDate=2026-11-20"</code></pre>
+              <pre><code class="language-json">{
+  "meta": {
+    "fund_house": "SBI Mutual Fund",
+    "scheme_type": "Open Ended Schemes",
+    "scheme_category": "Equity Scheme - Small Cap Fund",
+    "scheme_code": 125497,
+    "scheme_name": "SBI Small Cap Fund - Direct Plan - Growth",
+    "isin_growth": "INF200K01T51",
+    "isin_div_reinvestment": null
+  },
+  "data": [
+    { "date": "20-11-2026", "nav": "210.02130" },
+    { "date": "19-11-2026", "nav": "209.92400" }
+  ],
+  "status": "SUCCESS"
+}</code></pre>
+              <div class="note">
+                A valid scheme with no observations in the requested window returns
+                <code>"data": []</code> and <code>"status": "SUCCESS"</code>. An unknown
+                scheme code returns HTTP 404 with <code>"status": "NOT_FOUND"</code>.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="endpoint-latest" data-doc-section>
+          <h2>Latest NAV</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/mf/{scheme_code}/latest</code></div>
+            <div class="endpoint-body">
+              <p>Same envelope as the history endpoint, but <code>data</code> contains exactly one observation.</p>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/mf/125497/latest"</code></pre>
+              <pre><code class="language-json">{
+  "meta": {
+    "fund_house": "SBI Mutual Fund",
+    "scheme_type": "Open Ended Schemes",
+    "scheme_category": "Equity Scheme - Small Cap Fund",
+    "scheme_code": 125497,
+    "scheme_name": "SBI Small Cap Fund - Direct Plan - Growth",
+    "isin_growth": "INF200K01T51",
+    "isin_div_reinvestment": null
+  },
+  "data": [{ "date": "20-11-2026", "nav": "210.02130" }],
+  "status": "SUCCESS"
+}</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="endpoint-all-latest" data-doc-section>
+          <h2>All latest NAVs</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/mf/latest</code></div>
+            <div class="endpoint-body">
+              <p>One row per scheme with the most recent stored NAV. Supports <code>limit</code> and <code>offset</code>; without a limit all schemes are returned.</p>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/mf/latest?limit=2"</code></pre>
+              <pre><code class="language-json">[
+  { "schemeCode": 100119, "schemeName": "Aditya Birla Sun Life Liquid Fund-Discipline Plan-Growth", "nav": "392.41800", "date": "20-11-2026" },
+  { "schemeCode": 100121, "schemeName": "HDFC Balanced Fund - Dividend Option", "nav": "68.21400", "date": "20-11-2026" }
+]</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="endpoint-meta" data-doc-section>
+          <h2>Scheme metadata</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/mf/{scheme_code}/meta</code></div>
+            <div class="endpoint-body">
+              <p>Returns only the <code>meta</code> object for a scheme.</p>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/mf/125497/meta"</code></pre>
+              <pre><code class="language-json">{
+  "fund_house": "SBI Mutual Fund",
+  "scheme_type": "Open Ended Schemes",
+  "scheme_category": "Equity Scheme - Small Cap Fund",
+  "scheme_code": 125497,
+  "scheme_name": "SBI Small Cap Fund - Direct Plan - Growth",
+  "isin_growth": "INF200K01T51",
+  "isin_div_reinvestment": null
+}</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="endpoint-houses" data-doc-section>
+          <h2>Fund houses</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/fund-houses</code></div>
+            <div class="endpoint-body">
+              <p>Lists every AMC in the dataset with its scheme count.</p>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/fund-houses"</code></pre>
+              <pre><code class="language-json">[
+  { "fundHouse": "Aditya Birla Sun Life Mutual Fund", "schemeCount": 412 },
+  { "fundHouse": "Axis Mutual Fund", "schemeCount": 388 }
+]</code></pre>
+            </div>
+          </div>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/fund-houses/{fund_house}/schemes</code></div>
+            <div class="endpoint-body">
+              <p>Lists schemes for one fund house. URL-encode spaces as <code>%20</code>.</p>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/fund-houses/SBI%20Mutual%20Fund/schemes"</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="endpoint-categories" data-doc-section>
+          <h2>Categories</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/categories</code></div>
+            <div class="endpoint-body">
+              <p>Lists scheme types and categories with scheme counts.</p>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/categories"</code></pre>
+              <pre><code class="language-json">[
+  {
+    "schemeType": "Open Ended Schemes",
+    "schemeCategory": "Equity Scheme - Small Cap Fund",
+    "schemeCount": 42
+  }
+]</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="endpoint-nav-date" data-doc-section>
+          <h2>NAVs by date</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/nav/{date}</code></div>
+            <div class="endpoint-body">
+              <p>Returns NAVs published on a single date. Paginate with <code>limit</code> (default 100, max 5,000) and <code>offset</code>.</p>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/nav/20-11-2026?limit=2"</code></pre>
+              <pre><code class="language-json">{
+  "date": "20-11-2026",
+  "data": [
+    { "schemeCode": 100119, "schemeName": "Aditya Birla Sun Life Liquid Fund-Discipline Plan-Growth", "nav": "392.41800", "date": "20-11-2026" }
+  ]
+}</code></pre>
+              <div class="note warn">This endpoint requires the live API. Static JSON deployments do not include a per-date index; use the per-scheme files instead.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="endpoint-stats" data-doc-section>
+          <h2>Dataset statistics</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/stats</code></div>
+            <div class="endpoint-body">
+              <p>Freshness and size information for the dataset.</p>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/stats"</code></pre>
+              <pre><code class="language-json">{
+  "generated_at": "2026-11-21T09:50:21+00:00",
+  "latest_nav_date": "20-11-2026",
+  "earliest_nav_date": "2023-11-22",
+  "scheme_count": 14240,
+  "nav_rows": 7342190,
+  "fund_house_count": 55,
+  "category_count": 112,
+  "source": "AMFI India",
+  "source_url": "https://www.amfiindia.com/net-asset-value/nav-download",
+  "database_bytes": 412356608
+}</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="endpoint-health" data-doc-section>
+          <h2>Health</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/health</code></div>
+            <div class="endpoint-body">
+              <p>Returns HTTP 200 when the database is readable and contains NAV rows; HTTP 503 otherwise. Use it for uptime checks.</p>
+              <pre><code class="language-json">{
+  "status": "ok",
+  "database": "ok",
+  "latest_nav_date": "20-11-2026",
+  "last_sync": "2026-11-21T09:50:21+00:00",
+  "scheme_count": 14240
+}</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="response-format" data-doc-section>
+          <h2>Response format</h2>
+          <p>History responses always use the same envelope:</p>
+          <pre><code class="language-json">{
+  "meta": {
+    "fund_house": "string",
+    "scheme_type": "string",
+    "scheme_category": "string",
+    "scheme_code": 0,
+    "scheme_name": "string",
+    "isin_growth": "string | null",
+    "isin_div_reinvestment": "string | null"
+  },
+  "data": [
+    { "date": "DD-MM-YYYY", "nav": "0.00000" }
+  ],
+  "status": "SUCCESS"
+}</code></pre>
+          <p>
+            List endpoints return a bare JSON array. All responses are UTF-8. Unknown
+            fields should be ignored by clients to stay forward compatible.
+          </p>
+        </section>
+
+        <section class="doc-section" id="errors" data-doc-section>
+          <h2>Errors</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>HTTP</th><th>Status</th><th>When</th></tr></thead>
+              <tbody>
+                <tr><td>400</td><td><code>BAD_REQUEST</code></td><td>Invalid date or date range.</td></tr>
+                <tr><td>404</td><td><code>NOT_FOUND</code></td><td>Unknown scheme or fund house.</td></tr>
+                <tr><td>422</td><td><code>ERROR</code></td><td>Missing or malformed query parameter.</td></tr>
+                <tr><td>429</td><td><code>RATE_LIMITED</code></td><td>Client exceeded the rate limit.</td></tr>
+                <tr><td>503</td><td><code>UNAVAILABLE</code></td><td>Database is missing or still being built.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <pre><code class="language-json">{
+  "status": "NOT_FOUND",
+  "message": "Scheme 999999 not found"
+}</code></pre>
+        </section>
+
+        <section class="doc-section" id="static-mode" data-doc-section>
+          <h2>Static JSON mode</h2>
+          <p>
+            The GitHub Actions workflow can publish the entire dataset as static JSON,
+            which works on GitHub Pages, S3, Netlify or any file host — no server
+            required. In this mode paths gain a <code>.json</code> suffix:
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Live API</th><th>Static file</th></tr></thead>
+              <tbody>
+                <tr><td><code>/api/v1/mf</code></td><td><code>/api/v1/mf.json</code></td></tr>
+                <tr><td><code>/api/v1/mf/search?q=</code></td><td>Filter <code>/api/v1/mf.json</code> client-side</td></tr>
+                <tr><td><code>/api/v1/mf/{code}</code></td><td><code>/api/v1/mf/{code}.json</code></td></tr>
+                <tr><td><code>/api/v1/mf/{code}/latest</code></td><td><code>/api/v1/mf/{code}/latest.json</code></td></tr>
+                <tr><td><code>/api/v1/mf/latest</code></td><td><code>/api/v1/mf/latest.json</code></td></tr>
+                <tr><td><code>/api/v1/fund-houses</code></td><td><code>/api/v1/fund-houses.json</code></td></tr>
+                <tr><td><code>/api/v1/categories</code></td><td><code>/api/v1/categories.json</code></td></tr>
+                <tr><td><code>/api/v1/stats</code></td><td><code>/api/v1/stats.json</code></td></tr>
+                <tr><td><code>/api/v1/nav/{date}</code></td><td>Not available (use per-scheme files)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-sm muted">
+            Static responses have the same shapes as the live API. The site detects
+            static mode automatically and the <a href="explorer.html">explorer</a>
+            adapts its requests.
+          </p>
+        </section>
+
+        <section class="doc-section" id="self-hosting" data-doc-section>
+          <h2>Self-hosting</h2>
+          <h3>Docker (recommended)</h3>
+          <pre><code class="language-bash">docker compose up -d --build
+# API:     http://localhost:8000/api/v1/mf
+# Docs:    http://localhost:8000/docs
+# Swagger: http://localhost:8000/api/docs</code></pre>
+          <p>
+            On first start the container downloads the latest NAV file and a
+            configurable history window (default 365 days). The SQLite database lives
+            in the <code>mfdata</code> volume, so restarts are cheap.
+          </p>
+          <h3>Manual</h3>
+          <pre><code class="language-bash">python -m venv .venv
+# Windows: .venv\Scripts\activate
+source .venv/bin/activate
+pip install -r requirements.txt
+
+python -m pipeline sync --bootstrap-days 1095   # first run: ~3 years
+python -m pipeline export --out public          # optional static tree
+python -m pipeline serve --port 8000</code></pre>
+          <h3>Configuration</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Variable</th><th>Default</th><th>Purpose</th></tr></thead>
+              <tbody>
+                <tr><td><code>MFDATA_DATA_DIR</code></td><td><code>./data</code></td><td>Database and raw snapshot directory.</td></tr>
+                <tr><td><code>MFDATA_DB</code></td><td><code>data/mfdata.db</code></td><td>Explicit SQLite path.</td></tr>
+                <tr><td><code>MFDATA_BOOTSTRAP_DAYS</code></td><td><code>1095</code></td><td>History depth for a fresh database.</td></tr>
+                <tr><td><code>MFDATA_INCREMENTAL_DAYS</code></td><td><code>7</code></td><td>Correction window on incremental runs.</td></tr>
+                <tr><td><code>MFDATA_RATE_LIMIT</code></td><td><code>120</code></td><td>Requests per window; <code>0</code> disables limiting.</td></tr>
+                <tr><td><code>MFDATA_RATE_WINDOW</code></td><td><code>60</code></td><td>Window length in seconds.</td></tr>
+                <tr><td><code>MFDATA_CORS_ORIGINS</code></td><td><code>*</code></td><td>Comma-separated allowed origins.</td></tr>
+                <tr><td><code>MFDATA_AUTO_SYNC</code></td><td><code>1</code></td><td>Docker: sync automatically when the DB is missing.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Daily updates</h3>
+          <p>
+            The included <code>.github/workflows/update-data.yml</code> runs on a
+            schedule, restores the SQLite database from the Actions cache, syncs AMFI
+            data, exports static JSON and deploys GitHub Pages. Enable Pages with
+            <strong>Source: GitHub Actions</strong> in repository settings.
+          </p>
+          <div class="note">
+            A full backfill downloads several hundred megabytes from AMFI and can take
+            a while. The workflow caches the database between runs; only the recent
+            window is downloaded on subsequent runs.
+          </div>
+        </section>
+
+        <section class="doc-section" id="data-sources" data-doc-section>
+          <h2>Data sources</h2>
+          <ul>
+            <li>
+              <strong>Latest NAVs:</strong>
+              <a href="https://portal.amfiindia.com/spages/NAVAll.txt" rel="noopener">NAVAll.txt</a>
+              from AMFI India — one row per scheme for the latest published date.
+            </li>
+            <li>
+              <strong>History:</strong>
+              <a href="https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx" rel="noopener">DownloadNAVHistoryReport_Po.aspx</a>
+              — historical NAV report, fetched in 30-day chunks.
+            </li>
+            <li>
+              <strong>Reference:</strong>
+              <a href="https://www.amfiindia.com/net-asset-value/nav-download" rel="noopener">AMFI NAV download page</a>.
+            </li>
+          </ul>
+          <p>
+            AMFI is the official source for Indian mutual fund NAVs. Scheme names,
+            categories, ISINs and NAVs are reproduced as published. The project is not
+            affiliated with AMFI, SEBI or any asset management company.
+          </p>
+        </section>
+
+        <section class="doc-section" id="faq" data-doc-section>
+          <h2>FAQ</h2>
+          <h3>Is the API really free?</h3>
+          <p>Yes. No key, no payment, no registration. The code is MIT licensed.</p>
+          <h3>How fresh is the data?</h3>
+          <p>
+            The workflow runs twice daily and picks up the latest AMFI file. AMFI
+            normally publishes the previous trading day's NAV in the evening. Use
+            <code>/stats</code> or <a href="status.html">Status</a> to see the exact
+            dataset date.
+          </p>
+          <h3>Why are some schemes missing NAVs for a date?</h3>
+          <p>
+            AMFI only publishes a NAV when the AMC reports one. Close-ended and
+            interval schemes may not have daily NAVs. The history simply contains what
+            AMFI published.
+          </p>
+          <h3>Can I use this commercially?</h3>
+          <p>
+            The API code is MIT licensed and free to use. NAV data remains subject to
+            AMFI's and the AMCs' terms; verify redistribution requirements for your
+            use case.
+          </p>
+          <h3>How deep is the history?</h3>
+          <p>
+            The default bootstrap is 1,095 days (three years), configurable with
+            <code>--bootstrap-days</code>. The store keeps every row it has seen, so
+            history grows over time.
+          </p>
+          <h3>Can I get data as CSV?</h3>
+          <p>
+            The API returns JSON. Converting a response to CSV is trivial in Python,
+            pandas, Excel or Google Sheets. The raw AMFI feeds are semicolon-separated
+            text if you prefer CSV.
+          </p>
+          <h3>What is the difference from mfapi.in?</h3>
+          <p>
+            MF Data API is an independent, self-hostable implementation with the same
+            familiar URL shape, plus static JSON export, scheme metadata endpoints and
+            a transparent ingestion pipeline you can run yourself.
+          </p>
+        </section>
+
+        <section class="doc-section" id="license" data-doc-section>
+          <h2>License &amp; attribution</h2>
+          <p>
+            The application code is released under the MIT License. NAV data is
+            sourced from AMFI India and ultimately belongs to the respective asset
+            management companies. Include a visible attribution to AMFI when
+            redistributing the data.
+          </p>
+          <p class="text-sm muted">
+            Provided “as is”, without warranty of any kind. Verify NAVs against the
+            official AMFI source before using them for financial decisions.
+          </p>
+        </section>
+
+        <section class="doc-section" id="changelog" data-doc-section>
+          <h2>Changelog</h2>
+          <h3>1.0.0</h3>
+          <ul>
+            <li>Initial release: scheme list, search, history, latest NAV and metadata endpoints.</li>
+            <li>Reference endpoints for fund houses, categories and by-date NAVs.</li>
+            <li>Daily AMFI ingestion pipeline with SQLite storage and static JSON export.</li>
+            <li>GitHub Actions workflow, Docker image, documentation site and API explorer.</li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="index.html">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+            </svg>
+          </span>
+          <span>MF Data API<small>Indian mutual fund NAV</small></span>
+        </a>
+        <p>Free and open JSON access to Indian mutual fund NAV data, built from the official AMFI India feed.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">API explorer</a>
+        <a href="status.html">Status</a>
+      </div>
+      <div class="footer-col">
+        <h4>API</h4>
+        <a href="docs.html#endpoint-list">All schemes</a>
+        <a href="docs.html#endpoint-history">NAV history</a>
+        <a href="docs.html#static-mode">Static JSON</a>
+      </div>
+      <div class="footer-col">
+        <h4>Data</h4>
+        <a href="https://www.amfiindia.com/net-asset-value/nav-download" rel="noopener">AMFI India source</a>
+        <a href="docs.html#updates">Update schedule</a>
+        <a href="docs.html#license">License &amp; attribution</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <span>© <span data-year>2026</span> MF Data API. Data sourced from AMFI India.</span>
+      <span><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · Not affiliated with AMFI or any AMC.</span>
+    </div>
+  </footer>
+
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

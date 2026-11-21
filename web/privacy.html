@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy — MF Data API</title>
+  <meta name="description" content="Privacy policy for the MF Data API service.">
+  <meta name="theme-color" content="#060b16">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="MF Data API home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+          </svg>
+        </span>
+        <span>MF Data API<small>Indian mutual fund NAV</small></span>
+      </a>
+      <nav class="nav-links" id="site-nav" aria-label="Main navigation">
+        <a href="index.html#features">Features</a>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">Explorer</a>
+        <a href="status.html">Status</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-ghost btn-sm" data-swagger href="/api/docs">Swagger UI</a>
+        <a class="btn btn-primary btn-sm" href="docs.html">Read docs</a>
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="site-nav">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="container">
+    <article class="prose">
+      <span class="eyebrow">Legal</span>
+      <h1>Privacy policy</h1>
+      <p class="updated">Last updated: 21 November 2026</p>
+
+      <p>
+        MF Data API is a read-only public data service. This policy explains the very
+        small amount of information the service processes when you use it.
+      </p>
+
+      <h2>What we collect</h2>
+      <ul>
+        <li><strong>Request metadata:</strong> the live API keeps short-lived, in-memory counters keyed by client IP address solely to enforce rate limits. These counters expire automatically and are not written to disk.</li>
+        <li><strong>Server logs:</strong> the hosting platform may record standard request logs (IP address, timestamp, path, user agent) for security and operations.</li>
+        <li><strong>No accounts:</strong> the API does not offer registration, cookies, advertising or analytics tracking.</li>
+      </ul>
+
+      <h2>What we do not collect</h2>
+      <p>
+        We do not sell, rent or share personal information. We do not use third-party
+        advertising or cross-site tracking scripts on this documentation site.
+      </p>
+
+      <h2>Data you request</h2>
+      <p>
+        API responses contain public mutual fund information published by AMFI India.
+        They do not contain personal data.
+      </p>
+
+      <h2>Third-party links</h2>
+      <p>
+        This site links to AMFI India and other external resources. Their privacy
+        practices are governed by their own policies.
+      </p>
+
+      <h2>Self-hosted deployments</h2>
+      <p>
+        If you deploy this project yourself, you control the hosting environment,
+        logs and any additional analytics you choose to add. The bundled code does
+        not include analytics.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        For privacy questions, open an issue in the project repository. This project
+        is not affiliated with AMFI, SEBI or any asset management company.
+      </p>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-bottom" style="border-top:0">
+      <span>© <span data-year>2026</span> MF Data API. Data sourced from AMFI India.</span>
+      <span><a href="docs.html">Documentation</a> · <a href="terms.html">Terms</a></span>
+    </div>
+  </footer>
+
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>All Mutual Fund Schemes — MF Data API</title>
+  <meta name="description" content="Browse all Indian mutual fund schemes with NAV data. Filter by fund house, category, or search by name.">
+  <meta name="theme-color" content="#060b16">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="MF Data API home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+          </svg>
+        </span>
+        <span>MF Data API<small>Indian mutual fund NAV</small></span>
+      </a>
+      <nav class="nav-links" id="site-nav" aria-label="Main navigation">
+        <a href="index.html#features">Features</a>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">Explorer</a>
+        <a href="schemes.html" aria-current="page">Schemes</a>
+        <a href="status.html">Status</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-ghost btn-sm" data-swagger href="/api/docs">Swagger UI</a>
+        <a class="btn btn-primary btn-sm" href="explorer.html">Try it</a>
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="site-nav">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="docs-hero">
+      <div class="container">
+        <span class="eyebrow">Browse schemes</span>
+        <h1>All mutual fund schemes</h1>
+        <p>Search, filter, and explore ~14,000+ Indian mutual fund schemes with their latest NAVs and metadata.</p>
+      </div>
+    </section>
+
+    <div class="container" style="padding:30px 0 80px">
+      <div class="search-shell" style="margin-bottom:24px">
+        <div class="field-row">
+          <div class="field" style="flex:1;min-width:280px">
+            <label for="scheme-search">Search by name or code</label>
+            <input id="scheme-search" type="search" placeholder="e.g., HDFC, SBI Small Cap, 125497" autocomplete="off">
+          </div>
+          <div class="field" style="min-width:220px">
+            <label for="fund-house-filter">Fund house</label>
+            <select id="fund-house-filter"><option value="">All fund houses</option></select>
+          </div>
+          <div class="field" style="min-width:220px">
+            <label for="category-filter">Category</label>
+            <select id="category-filter"><option value="">All categories</option></select>
+          </div>
+        </div>
+        <p class="search-hint" style="margin-top:8px">
+          Press <kbd>Enter</kbd> or click Search. Results update the table below.
+        </p>
+      </div>
+
+      <div class="table-wrap" style="margin-bottom:16px">
+        <table id="schemes-table">
+          <thead>
+            <tr>
+              <th style="width:80px">Code</th>
+              <th>Scheme name</th>
+              <th style="width:180px">Fund house</th>
+              <th style="width:200px">Category</th>
+              <th style="width:110px">Latest NAV</th>
+              <th style="width:110px">Date</th>
+              <th style="width:90px"></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div id="loading-indicator" class="text-sm muted" style="display:none;text-align:center;padding:16px">
+        Loading…
+      </div>
+      <div id="empty-state" class="text-sm muted" style="display:none;text-align:center;padding:24px">
+        No schemes match your filters.
+      </div>
+
+      <div id="pagination" style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:16px"></div>
+
+      <div class="note" style="margin-top:24px;max-width:800px">
+        <strong>Data source:</strong> AMFI India (<a href="https://www.amfiindia.com/net-asset-value/nav-download" rel="noopener">NAV download page</a>).
+        NAV values are as published by AMCs. Scheme metadata (type, category, ISIN) comes from AMFI's official feeds.
+        <br><br>
+        <strong>Tip:</strong> Use the <a href="explorer.html">API explorer</a> to build complex queries,
+        or fetch the complete list via <code>GET /api/v1/mf</code>.
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="index.html">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+            </svg>
+          </span>
+          <span>MF Data API<small>Indian mutual fund NAV</small></span>
+        </a>
+        <p>Free and open JSON access to Indian mutual fund NAV data, built from the official AMFI India feed.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">API explorer</a>
+        <a href="status.html">Status</a>
+        <a href="about.html">About</a>
+      </div>
+      <div class="footer-col">
+        <h4>API</h4>
+        <a href="docs.html#endpoint-list">All schemes</a>
+        <a href="docs.html#endpoint-history">NAV history</a>
+        <a href="docs.html#static-mode">Static JSON</a>
+      </div>
+      <div class="footer-col">
+        <h4>Data</h4>
+        <a href="https://www.amfiindia.com/net-asset-value/nav-download" rel="noopener">AMFI India source</a>
+        <a href="docs.html#updates">Update schedule</a>
+        <a href="docs.html#license">License & attribution</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <span>© <span data-year>2026</span> MF Data API. Data sourced from AMFI India.</span>
+      <span><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · Not affiliated with AMFI or any AMC.</span>
+    </div>
+  </footer>
+
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+  <script>
+(() => {
+  const STATIC = (() => {
+    const cfg = Object.assign({ mode: "server", apiBase: "/api/v1", repoUrl: "" }, window.MFDATA_CONFIG || {});
+    return cfg.mode === "static" || location.protocol === "file:" || !String(cfg.apiBase || "").startsWith("/");
+  })();
+  const BASE = String((window.MFDATA_CONFIG && window.MFDATA_CONFIG.apiBase) || "/api/v1").replace(/\/+$/, "");
+
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+  const nf = new Intl.NumberFormat("en-IN");
+
+  const searchInput = $("#scheme-search");
+  const fundHouseSelect = $("#fund-house-filter");
+  const categorySelect = $("#category-filter");
+  const tbody = $("#schemes-table tbody");
+  const pagination = $("#pagination");
+  const loading = $("#loading-indicator");
+  const emptyState = $("#empty-state");
+
+  let currentPage = 0;
+  const pageSize = 50;
+  let debounceTimer = null;
+  let totalSchemes = 0;
+
+  function apiUrl(path, params = {}) {
+    const url = new URL(BASE + path, document.baseURI);
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && String(v).trim() !== "") url.searchParams.set(k, v);
+    });
+    return url;
+  }
+
+  async function fetchJson(url) {
+    const resp = await fetch(url, { headers: { Accept: "application/json" } });
+    const text = await resp.text();
+    try { return { ok: resp.ok, data: text ? JSON.parse(text) : null }; }
+    catch { return { ok: resp.ok, data: text }; }
+  }
+
+  async function loadFilters() {
+    try {
+      const housesUrl = STATIC ? apiUrl("/fund-houses.json") : apiUrl("/fund-houses");
+      const catsUrl = STATIC ? apiUrl("/categories.json") : apiUrl("/categories");
+      const [houses, cats] = await Promise.all([fetchJson(housesUrl), fetchJson(catsUrl)]);
+      if (houses.ok && Array.isArray(houses.data)) {
+        houses.data.forEach(h => {
+          const opt = document.createElement("option");
+          opt.value = h.fundHouse;
+          opt.textContent = `${h.fundHouse} (${nf.format(h.schemeCount)})`;
+          fundHouseSelect.appendChild(opt);
+        });
+      }
+      if (cats.ok && Array.isArray(cats.data)) {
+        cats.data.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c.schemeCategory;
+          opt.textContent = `${c.schemeType} · ${c.schemeCategory} (${nf.format(c.schemeCount)})`;
+          categorySelect.appendChild(opt);
+        });
+      }
+    } catch (e) {
+      console.warn("Failed to load filters", e);
+    }
+  }
+
+  function buildQueryParams(page = 0) {
+    const params = { limit: pageSize, offset: page * pageSize };
+    const q = searchInput.value.trim();
+    if (q) params.q = q;
+    if (fundHouseSelect.value) params.fund_house = fundHouseSelect.value;
+    if (categorySelect.value) params.category = categorySelect.value;
+    return params;
+  }
+
+  function renderRow(scheme) {
+    const tr = document.createElement("tr");
+    const nav = scheme.nav !== undefined ? nf.format(Number(scheme.nav)) : "—";
+    const date = scheme.date || "—";
+    tr.innerHTML = `
+      <td><code>${scheme.schemeCode}</code></td>
+      <td><strong>${escapeHtml(scheme.schemeName)}</strong></td>
+      <td>${escapeHtml(scheme.fundHouse || "—")}</td>
+      <td>${escapeHtml(scheme.schemeCategory || "—")}</td>
+      <td><code>${nav}</code></td>
+      <td>${date}</td>
+      <td>
+        <a class="copy-btn" href="explorer.html?endpoint=latest&code=${scheme.schemeCode}" target="_blank" rel="noopener">View</a>
+      </td>
+    `;
+    return tr;
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, s => ({ "&": "&", "<": "<", ">": ">", '"': """, "'": "'" }[s]));
+  }
+
+  async function loadSchemes(page = 0) {
+    currentPage = page;
+    loading.style.display = "block";
+    emptyState.style.display = "none";
+    tbody.innerHTML = "";
+    pagination.innerHTML = "";
+
+    try {
+      const params = buildQueryParams(page);
+      const listUrl = STATIC ? apiUrl("/mf.json") : apiUrl("/mf", params);
+      const { ok, data } = await fetchJson(listUrl);
+      if (!ok) throw new Error("Failed to fetch schemes");
+
+      let schemes = Array.isArray(data) ? data : [];
+      if (STATIC) {
+        // Client-side filtering for static mode
+        const q = params.q?.toLowerCase() || "";
+        if (q) {
+          schemes = schemes.filter(s =>
+            s.schemeName.toLowerCase().includes(q) ||
+            String(s.schemeCode) === q
+          );
+        }
+        if (params.fund_house) {
+          schemes = schemes.filter(s => s.fundHouse === params.fund_house);
+        }
+        if (params.category) {
+          schemes = schemes.filter(s => s.schemeCategory === params.category);
+        }
+        totalSchemes = schemes.length;
+        schemes = schemes.slice(params.offset, params.offset + pageSize);
+      } else {
+        // For live API, we need a separate count call; estimate from returned length
+        totalSchemes = schemes.length === pageSize ? (page + 1) * pageSize + 1 : (page * pageSize + schemes.length);
+      }
+
+      if (schemes.length === 0) {
+        emptyState.style.display = "block";
+      } else {
+        schemes.forEach(s => tbody.appendChild(renderRow(s)));
+        renderPagination();
+      }
+    } catch (err) {
+      console.error(err);
+      emptyState.textContent = "Failed to load schemes. Please try again.";
+      emptyState.style.display = "block";
+    } finally {
+      loading.style.display = "none";
+    }
+  }
+
+  function renderPagination() {
+    const totalPages = Math.ceil(totalSchemes / pageSize);
+    if (totalPages <= 1) return;
+    const maxVisible = 5;
+    let start = Math.max(0, currentPage - Math.floor(maxVisible / 2));
+    const end = Math.min(totalPages, start + maxVisible);
+    start = Math.max(0, end - maxVisible);
+
+    const prev = document.createElement("button");
+    prev.type = "button";
+    prev.className = "copy-btn";
+    prev.textContent = "← Prev";
+    prev.disabled = currentPage === 0;
+    prev.onclick = () => loadSchemes(currentPage - 1);
+    pagination.appendChild(prev);
+
+    for (let i = start; i < end; i++) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "copy-btn" + (i === currentPage ? " btn-primary" : "");
+      btn.textContent = String(i + 1);
+      if (i === currentPage) btn.disabled = true;
+      btn.onclick = () => loadSchemes(i);
+      pagination.appendChild(btn);
+    }
+
+    const next = document.createElement("button");
+    next.type = "button";
+    next.className = "copy-btn";
+    next.textContent = "Next →";
+    next.disabled = currentPage >= totalPages - 1;
+    next.onclick = () => loadSchemes(currentPage + 1);
+    pagination.appendChild(next);
+  }
+
+  function debouncedLoad() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => loadSchemes(0), 300);
+  }
+
+  searchInput.addEventListener("input", debouncedLoad);
+  fundHouseSelect.addEventListener("change", () => loadSchemes(0));
+  categorySelect.addEventListener("change", () => loadSchemes(0));
+
+  loadFilters().then(() => loadSchemes(0));
+})();
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+Scheme Code;NAV Name;Plan;Option;ISIN Div Payout/ISIN Growth;ISIN Div Reinvestment;Net Asset Value;Date
+ 
+Open Ended Schemes ( Equity Scheme - Small Cap Fund )
+ 
+SBI Mutual Fund
+ 
+125497;SBI Small Cap Fund - Direct Plan - Growth;Direct Plan;Growth;INF200K01T51;;210.0213;20-Nov-2026
+125497;SBI Small Cap Fund - Direct Plan - Growth;Direct Plan;Growth;INF200K01T51;;209.588;16-Nov-2026
+125497;SBI Small Cap Fund - Direct Plan - Growth;Direct Plan;Growth;INF200K01T51;;209.6376;17-Nov-2026
+ 
+Close Ended Schemes ( ELSS )
+ 
+HDFC Mutual Fund
+ 
+100121;HDFC TaxSaver - Growth;Regular Plan;Growth;INF179K01016;;68.214;20-Nov-2026

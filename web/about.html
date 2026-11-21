@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About — MF Data API</title>
+  <meta name="description" content="Learn about MF Data API: a free, open JSON API for Indian mutual fund NAV data built from the official AMFI India feeds.">
+  <meta name="theme-color" content="#060b16">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="MF Data API home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+          </svg>
+        </span>
+        <span>MF Data API<small>Indian mutual fund NAV</small></span>
+      </a>
+      <nav class="nav-links" id="site-nav" aria-label="Main navigation">
+        <a href="index.html#features">Features</a>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">Explorer</a>
+        <a href="about.html" aria-current="page">About</a>
+        <a href="status.html">Status</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-ghost btn-sm" data-swagger href="/api/docs">Swagger UI</a>
+        <a class="btn btn-primary btn-sm" href="explorer.html">Try it</a>
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="site-nav">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="docs-hero">
+      <div class="container">
+        <span class="eyebrow">About MF Data API</span>
+        <h1>Free Indian mutual fund data for everyone</h1>
+        <p>
+          MF Data API provides programmatic access to Indian mutual fund Net Asset Values (NAVs),
+          scheme metadata, and historical data — completely free, no registration required.
+        </p>
+      </div>
+    </section>
+
+    <div class="container" style="padding:50px 0 80px">
+      <section class="doc-section">
+        <h2>What is MF Data API?</h2>
+        <p>
+          MF Data API is a free, open-source JSON API that provides complete historical NAV data
+          for all Indian mutual fund schemes. The data is sourced directly from
+          <a href="https://www.amfiindia.com/net-asset-value/nav-download" rel="noopener">AMFI India</a>
+          (Association of Mutual Funds in India), the official industry body for mutual funds in India.
+        </p>
+        <p>
+          It mirrors the popular <code>mfapi.in</code> service but is fully self-hostable,
+          transparent, and includes additional endpoints for fund houses, categories, and bulk access.
+        </p>
+      </section>
+
+      <section class="doc-section">
+        <h2>Key features</h2>
+        <ul style="list-style:disc;padding-left:22px">
+          <li><strong>Complete coverage:</strong> ~14,000+ schemes across 55+ fund houses</li>
+          <li><strong>Historical depth:</strong> Multi-year NAV history with daily granularity</li>
+          <li><strong>Rich metadata:</strong> Scheme type, category, plan, option, ISINs</li>
+          <li><strong>No authentication:</strong> Open API, no keys, no signup, no rate-limit surprises</li>
+          <li><strong>Daily updates:</strong> Automated GitHub Actions workflow refreshes data twice daily from AMFI</li>
+          <li><strong>Dual mode:</strong> Run as a live FastAPI service or deploy as static JSON to GitHub Pages/CDN</li>
+          <li><strong>Self-hostable:</strong> Docker image, Python package, or static export — you own your deployment</li>
+          <li><strong>Developer friendly:</strong> REST + JSON, Swagger UI, interactive explorer, code examples</li>
+        </ul>
+      </section>
+
+      <section class="doc-section">
+        <h2>Data pipeline transparency</h2>
+        <p>
+          Unlike black-box APIs, the entire ingestion pipeline is open source and runs in GitHub Actions:
+        </p>
+        <ol style="padding-left:22px">
+          <li>Downloads <code>NAVAll.txt</code> (latest NAVs) and <code>DownloadNAVHistoryReport_Po.aspx</code> (historical) from AMFI</li>
+          <li>Parses, normalises, and de-duplicates rows into SQLite with WAL mode</li>
+          <li>Refreshes denormalised "latest NAV" columns and computes dataset statistics</li>
+          <li>Exports the full API as static JSON files (one per scheme) for zero-server hosting</li>
+          <li>Commits dataset status and deploys the documentation site to GitHub Pages</li>
+        </ol>
+        <p>
+          You can audit every step in the <code>pipeline/</code> directory and run it yourself locally or on your own infrastructure.
+        </p>
+      </section>
+
+      <section class="doc-section">
+        <h2>Use cases</h2>
+        <div class="feature-grid">
+          <article class="card">
+            <h3>Portfolio tracking</h3>
+            <p>Fetch latest NAVs for your holdings to calculate real-time portfolio value.</p>
+          </article>
+          <article class="card">
+            <h3>Historical analysis</h3>
+            <p>Download full NAV history for backtesting, performance charts, or risk analysis.</p>
+          </article>
+          <article class="card">
+            <h3>Financial apps</h3>
+            <p>Embed NAV data in personal finance apps, robo-advisors, or research dashboards.</p>
+          </article>
+          <article class="card">
+            <h3>Spreadsheets</h3>
+            <p>Use <code>IMPORTDATA</code> in Google Sheets or Power Query in Excel for no-code access.</p>
+          </article>
+          <article class="card">
+            <h3>Academic research</h3>
+            <p>Clean, structured dataset for mutual fund performance studies and market analysis.</p>
+          </article>
+          <article class="card">
+            <h3>Automation</h3>
+            <p>Schedule daily NAV pulls for compliance reporting, client statements, or alerts.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="doc-section">
+        <h2>Attribution & data license</h2>
+        <p>
+          The application code is released under the <a href="https://github.com/MFAPI/MFAPI/blob/main/LICENSE">MIT License</a>.
+          NAV data remains subject to AMFI's and the respective asset management companies' terms.
+          <strong>Attribution to AMFI India is required</strong> when redistributing the data.
+        </p>
+        <div class="note">
+          This project is <strong>not affiliated</strong> with AMFI, SEBI, any asset management company,
+          or the original <code>mfapi.in</code>. It is an independent, community-driven implementation.
+        </div>
+      </section>
+
+      <section class="doc-section">
+        <h2>Contact & community</h2>
+        <p>
+          Found a bug? Have a feature request? Want to contribute?
+        </p>
+        <ul style="list-style:disc;padding-left:22px">
+          <li>Open an issue on <a href="https://github.com/MFAPI/MFAPI/issues" rel="noopener">GitHub</a></li>
+          <li>Join the <a href="https://t.me/mfapi_in" rel="noopener">Telegram community</a></li>
+          <li>Follow updates on <a href="https://twitter.com/SkyRocknRoll" rel="noopener">Twitter/X</a></li>
+        </ul>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="index.html">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+            </svg>
+          </span>
+          <span>MF Data API<small>Indian mutual fund NAV</small></span>
+        </a>
+        <p>Free and open JSON access to Indian mutual fund NAV data, built from the official AMFI India feed.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">API explorer</a>
+        <a href="status.html">Status</a>
+        <a href="about.html">About</a>
+      </div>
+      <div class="footer-col">
+        <h4>API</h4>
+        <a href="docs.html#endpoint-list">All schemes</a>
+        <a href="docs.html#endpoint-history">NAV history</a>
+        <a href="docs.html#static-mode">Static JSON</a>
+      </div>
+      <div class="footer-col">
+        <h4>Data</h4>
+        <a href="https://www.amfiindia.com/net-asset-value/nav-download" rel="noopener">AMFI India source</a>
+        <a href="docs.html#updates">Update schedule</a>
+        <a href="docs.html#license">License & attribution</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <span>© <span data-year>2026</span> MF Data API. Data sourced from AMFI India.</span>
+      <span><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · Not affiliated with AMFI or any AMC.</span>
+    </div>
+  </footer>
+
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

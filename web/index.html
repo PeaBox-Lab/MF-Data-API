@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MF Data API — Free Indian Mutual Fund NAV API</title>
+  <meta name="description" content="Free, open JSON API for Indian mutual fund NAV data. Complete scheme metadata and historical NAVs, updated daily from AMFI India. No authentication required.">
+  <meta name="theme-color" content="#060b16">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="MF Data API home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 17l5-6 4 3 5-7 4 4"></path>
+            <path d="M3 21h18"></path>
+          </svg>
+        </span>
+        <span>MF Data API<small>Indian mutual fund NAV</small></span>
+      </a>
+
+      <nav class="nav-links" id="site-nav" aria-label="Main navigation">
+        <a href="#features">Features</a>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">Explorer</a>
+        <a href="status.html">Status</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a class="btn btn-ghost btn-sm" data-swagger href="/api/docs">API reference</a>
+        <a class="btn btn-primary btn-sm" href="docs.html#quick-start">Get started</a>
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="site-nav">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <span class="eyebrow"><span class="dot"></span> Updated daily from AMFI India</span>
+          <h1 class="hero-title">India's free<br><span class="gradient-text">mutual fund data API</span></h1>
+          <p class="hero-lead">
+            Complete historical NAV data, scheme metadata and ISINs for every Indian
+            mutual fund — served as clean, predictable JSON. No keys. No sign-up. No
+            rate-limit surprises.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="docs.html">Read the documentation</a>
+            <a class="btn btn-ghost" href="explorer.html">Try the API explorer</a>
+          </div>
+          <ul class="hero-meta">
+            <li>JSON responses</li>
+            <li>No authentication</li>
+            <li>Daily GitHub Actions refresh</li>
+            <li>Static JSON fallback</li>
+          </ul>
+        </div>
+
+        <div class="hero-card" aria-label="Example API request and response">
+          <div class="hero-card-head">
+            <span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span>Live example</span>
+          </div>
+          <div class="hero-card-body">
+            <pre class="code-line"><span class="tok-get">GET</span> <span class="tok-url">/api/v1/mf/125497/latest</span></pre>
+            <pre class="mini-response">{
+  <span class="k">"meta"</span>: {
+    <span class="k">"fund_house"</span>: <span class="s">"SBI Mutual Fund"</span>,
+    <span class="k">"scheme_code"</span>: <span class="n">125497</span>,
+    <span class="k">"scheme_name"</span>: <span class="s">"SBI Small Cap Fund - Direct Plan - Growth"</span>
+  },
+  <span class="k">"data"</span>: [
+    { <span class="k">"date"</span>: <span class="s">"20-11-2026"</span>, <span class="k">"nav"</span>: <span class="s">"210.02130"</span> }
+  ],
+  <span class="k">"status"</span>: <span class="s">"SUCCESS"</span>
+}</pre>
+            <div style="display:flex;justify-content:space-between;gap:10px;margin-top:14px;flex-wrap:wrap">
+              <span class="text-sm muted" data-last-updated>Latest data is loaded live</span>
+              <a class="text-sm" href="docs.html#endpoint-latest">Response schema →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats-band" aria-label="Dataset statistics">
+      <div class="container stats-grid">
+        <div class="stat">
+          <span class="stat-value" data-stat="schemes">14,000+</span>
+          <span class="stat-label">Mutual fund schemes</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" data-stat="rows">10M+</span>
+          <span class="stat-label">Historical NAV rows</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" data-stat="houses">55+</span>
+          <span class="stat-label">Fund houses covered</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" data-stat="latest">Daily</span>
+          <span class="stat-label">Latest NAV date</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="search">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Search the dataset</span>
+          <h2>Find any mutual fund scheme</h2>
+          <p>Search by scheme name or AMFI scheme code. You will get ready-to-use API and latest-NAV URLs.</p>
+        </div>
+
+        <div class="search-shell">
+          <div class="search-row">
+            <input id="fund-search" type="search" placeholder="Try “SBI Small Cap”, “HDFC”, or 125497" autocomplete="off" aria-label="Search mutual fund schemes">
+            <a class="btn btn-primary" href="explorer.html">Open explorer</a>
+          </div>
+          <p class="search-hint">Examples: <button type="button" class="copy-btn" data-copy-text="hdfc" data-fill-search="hdfc">hdfc</button> <button type="button" class="copy-btn" data-copy-text="axis" data-fill-search="axis">axis</button> <button type="button" class="copy-btn" data-copy-text="125497" data-fill-search="125497">125497</button></p>
+
+          <div id="search-results" class="search-results" role="listbox" aria-live="polite"></div>
+
+          <div id="scheme-panel" class="scheme-panel">
+            <div class="scheme-title">
+              <strong id="selected-name">—</strong>
+              <span id="selected-code">—</span>
+            </div>
+            <p class="nav-highlight" id="selected-nav">Select a scheme to load its latest NAV.</p>
+            <div class="url-row">
+              <label>History URL</label>
+              <code id="selected-api-url">—</code>
+              <button class="copy-btn" type="button" data-copy="#selected-api-url">Copy</button>
+            </div>
+            <div class="url-row">
+              <label>Latest URL</label>
+              <code id="selected-latest-url">—</code>
+              <button class="copy-btn" type="button" data-copy="#selected-latest-url">Copy</button>
+            </div>
+            <p class="search-hint"><a id="selected-link" href="explorer.html">Open this scheme in the API explorer →</a></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Why MF Data API</span>
+          <h2>Everything you need, nothing you don't</h2>
+          <p>A deliberately small API surface, predictable JSON, and data that stays fresh without any maintenance on your side.</p>
+        </div>
+
+        <div class="feature-grid">
+          <article class="card">
+            <div class="card-icon" aria-hidden="true">⚡</div>
+            <h3>Fast by design</h3>
+            <p>Indexed SQLite queries, gzip compression and short-lived cache headers keep responses quick even for full histories.</p>
+          </article>
+          <article class="card">
+            <div class="card-icon" aria-hidden="true">🔓</div>
+            <h3>Completely free</h3>
+            <p>No authentication, no API keys and no registration. Use it from a notebook, a side project or a production dashboard.</p>
+          </article>
+          <article class="card">
+            <div class="card-icon" aria-hidden="true">📊</div>
+            <h3>Complete data</h3>
+            <p>Scheme name, AMC, type, category, ISINs and the full daily NAV history — all in one response.</p>
+          </article>
+          <article class="card">
+            <div class="card-icon" aria-hidden="true">🔄</div>
+            <h3>Automatic daily updates</h3>
+            <p>A scheduled GitHub Actions workflow pulls the official AMFI feed, rebuilds the database and publishes new JSON.</p>
+          </article>
+          <article class="card">
+            <div class="card-icon" aria-hidden="true">🧩</div>
+            <h3>Easy integration</h3>
+            <p>Plain REST + JSON works with Python, JavaScript, Excel, Google Sheets, R, Go — anything that can make an HTTP request.</p>
+          </article>
+          <article class="card">
+            <div class="card-icon" aria-hidden="true">🛡️</div>
+            <h3>Self-hostable</h3>
+            <p>Run the whole stack with Docker, or publish the generated static JSON tree to any CDN or GitHub Pages.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="pipeline">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Transparent pipeline</span>
+          <h2>From AMFI's feed to your app</h2>
+          <p>The repository contains the full ingestion workflow, so you can audit exactly where every number comes from.</p>
+        </div>
+
+        <div class="pipeline">
+          <article class="pipeline-step">
+            <h3>Download official data</h3>
+            <p>The pipeline fetches <code>NAVAll.txt</code> plus historical reports from AMFI India, in 30-day chunks with retries.</p>
+          </article>
+          <article class="pipeline-step">
+            <h3>Normalise &amp; store</h3>
+            <p>Rows are parsed, de-duplicated and upserted into SQLite. Scheme metadata is merged across feeds and kept current.</p>
+          </article>
+          <article class="pipeline-step">
+            <h3>Publish APIs</h3>
+            <p>FastAPI serves live queries, while the same payloads are exported as static JSON for free hosting and offline use.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="endpoints">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">API surface</span>
+          <h2>Four endpoints cover most use cases</h2>
+          <p>All endpoints are GET, return JSON, and accept an optional <code>/api/v1</code> prefix.</p>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Endpoint</th><th>What it returns</th><th>Example</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="method get">GET</span> <code>/mf</code></td>
+                <td>Every scheme code and name, with optional pagination and filters.</td>
+                <td><a href="docs.html#endpoint-list">Reference</a></td>
+              </tr>
+              <tr>
+                <td><span class="method get">GET</span> <code>/mf/search?q=</code></td>
+                <td>Case-insensitive scheme search ranked by prefix matches.</td>
+                <td><a href="docs.html#endpoint-search">Reference</a></td>
+              </tr>
+              <tr>
+                <td><span class="method get">GET</span> <code>/mf/{code}</code></td>
+                <td>Metadata and full NAV history, newest first, with date filtering.</td>
+                <td><a href="docs.html#endpoint-history">Reference</a></td>
+              </tr>
+              <tr>
+                <td><span class="method get">GET</span> <code>/mf/{code}/latest</code></td>
+                <td>The single most recent NAV for one scheme.</td>
+                <td><a href="docs.html#endpoint-latest">Reference</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="search-hint">Additional endpoints: <a href="docs.html#endpoint-all-latest">all latest NAVs</a>, <a href="docs.html#endpoint-meta">scheme metadata</a>, <a href="docs.html#endpoint-houses">fund houses</a>, <a href="docs.html#endpoint-categories">categories</a>, <a href="docs.html#endpoint-nav-date">NAVs by date</a> and <a href="docs.html#endpoint-stats">dataset stats</a>.</p>
+      </div>
+    </section>
+
+    <section class="section-tight">
+      <div class="container">
+        <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;padding:32px;background:radial-gradient(600px 200px at 10% 0%, rgba(46,230,168,.12), transparent 70%), var(--surface)">
+          <div>
+            <h2 style="margin:0 0 8px;font-size:1.5rem;letter-spacing:-.025em">Start building in under a minute</h2>
+            <p class="muted" style="margin:0">Copy a curl command, open the explorer, or deploy the whole stack yourself.</p>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <a class="btn btn-primary" href="docs.html#quick-start">Quick start</a>
+            <a class="btn btn-ghost" href="explorer.html">API explorer</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="index.html">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+            </svg>
+          </span>
+          <span>MF Data API<small>Indian mutual fund NAV</small></span>
+        </a>
+        <p>Free and open JSON access to Indian mutual fund NAV data, built from the official AMFI India feed.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">API explorer</a>
+        <a href="status.html">Status</a>
+      </div>
+      <div class="footer-col">
+        <h4>API</h4>
+        <a href="docs.html#endpoint-list">All schemes</a>
+        <a href="docs.html#endpoint-history">NAV history</a>
+        <a href="docs.html#static-mode">Static JSON</a>
+      </div>
+      <div class="footer-col">
+        <h4>Data</h4>
+        <a href="https://www.amfiindia.com/net-asset-value/nav-download" rel="noopener">AMFI India source</a>
+        <a href="docs.html#updates">Update schedule</a>
+        <a href="docs.html#license">License &amp; attribution</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <span>© <span data-year>2026</span> MF Data API. Data sourced from AMFI India.</span>
+      <span><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · Not affiliated with AMFI or any AMC.</span>
+    </div>
+  </footer>
+
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

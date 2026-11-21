@@ -1,0 +1,12 @@
+/* MF Data API configuration.
+ *
+ * Server mode (FastAPI): apiBase is absolute and paths have no suffix.
+ * Static mode (GitHub Pages): the build workflow overwrites this file with
+ *   mode: "static", apiBase: "api/v1"
+ * so every request resolves to a .json file next to the site.
+ */
+window.MFDATA_CONFIG = {
+  mode: "server",
+  apiBase: "/api/v1",
+  repoUrl: "",
+};
