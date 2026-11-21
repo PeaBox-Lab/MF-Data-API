@@ -1,22 +1,18 @@
 {
-  "generated_at": "2026-11-21T14:51:22+00:00",
-  "duration_seconds": 6579.5,
+  "generated_at": "2026-11-21T18:03:47+00:00",
+  "duration_seconds": 141.2,
   "mode": "full",
   "latest_nav_date": "2026-11-22",
   "earliest_nav_date": "2012-02-17",
   "scheme_count": 14629,
-  "nav_rows": 5451228,
+  "nav_rows": 5451438,
   "fund_house_count": 55,
   "navall_rows": 14240,
-  "history_rows": 5288912,
-  "history_chunks": 37,
+  "history_rows": 368929,
+  "history_chunks": 3,
   "errors": [
-    "2023-11-22..2023-12-21: Failed to download https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx: The read operation timed out",
-    "2024-07-19..2024-08-17: Failed to download https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx: The read operation timed out",
-    "2025-02-14..2025-03-15: Failed to download https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx: The read operation timed out",
-    "2025-05-15..2025-06-13: Failed to download https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx: The read operation timed out",
-    "2025-07-14..2025-08-12: Failed to download https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx: The read operation timed out"
+    "2026-11-21..2026-11-21: Failed to download https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx: AMFI response did not contain a scheme table header"
   ],
-  "database_bytes": 298004480,
+  "database_bytes": 298037248,
   "source": "AMFI India"
 }
