@@ -91,15 +91,15 @@
             <thead><tr><th>Check</th><th>Endpoint</th><th>Expected</th></tr></thead>
             <tbody>
               <tr><td>Dataset statistics</td><td><a data-static-href="api/v1/stats.json" href="api/v1/stats"><code>/api/v1/stats</code></a></td><td>HTTP 200, JSON</td></tr>
-              <tr data-live-only><td>Health</td><td><a href="api/v1/health"><code>/api/v1/health</code></a></td><td>HTTP 200, <code>"status": "ok"</code></td></tr>
+              <tr><td>Health</td><td><a data-static-href="api/v1/health.json" href="api/v1/health"><code>/api/v1/health</code></a></td><td>HTTP 200, <code>"status": "ok"</code></td></tr>
               <tr><td>Scheme list</td><td><a data-static-href="api/v1/mf.json" href="api/v1/mf?limit=1"><code>/api/v1/mf?limit=1</code></a></td><td>One scheme</td></tr>
               <tr><td>Latest NAV</td><td><a data-static-href="api/v1/mf/125497/latest.json" href="api/v1/mf/125497/latest"><code>/api/v1/mf/125497/latest</code></a></td><td>One observation</td></tr>
             </tbody>
           </table>
         </div>
         <p class="text-sm muted" style="margin-top:14px">
-          On a static deployment, the health endpoint is not available; use
-          <code>/api/v1/stats.json</code> to check the dataset date.
+          In static mode, health is served from <code>/api/v1/health.json</code>.
+          Use <code>/api/v1/stats.json</code> for extended dataset statistics.
         </p>
       </section>
 

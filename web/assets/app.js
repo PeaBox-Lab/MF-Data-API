@@ -5,10 +5,16 @@
     { mode: "server", apiBase: "/api/v1", repoUrl: "" },
     window.MFDATA_CONFIG || {}
   );
+
+  // Detect static mode: explicit flag, file protocol, or non-absolute apiBase
   const STATIC =
     cfg.mode === "static" ||
     location.protocol === "file:" ||
     !String(cfg.apiBase || "").startsWith("/");
+
+  // Endpoints that only exist on the live API (no static .json equivalent)
+  const LIVE_ONLY_ENDPOINTS = new Set(["navDate"]);
+
   const BASE = String(cfg.apiBase || "/api/v1").replace(/\/+$/, "");
 
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -515,7 +521,7 @@
         case "stats":
           return apiUrl("/stats.json");
         case "health":
-          return apiUrl("/stats.json");
+          return apiUrl("/health.json");
         case "navDate":
           return null;
         default:
@@ -564,14 +570,7 @@
         case "meta":
           return data.meta;
         case "health":
-          return {
-            status: "ok",
-            database: "ok",
-            latest_nav_date: data.latest_nav_date,
-            last_sync: data.generated_at,
-            scheme_count: data.scheme_count,
-            note: "Served from static JSON files.",
-          };
+          return data;
         case "navDate":
           throw new Error(
             "The by-date endpoint is only available on the live API. Use /mf/{code} for static history."

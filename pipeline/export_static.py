@@ -148,10 +148,22 @@ def export_static(
                 "fund_houses": "fund-houses.json",
                 "categories": "categories.json",
                 "recent_dates": "dates.json",
+                "health": "health.json",
             },
         },
         compact=False,
     )
+
+    # Health check payload (mirrors live /health endpoint)
+    meta = store.get_meta()
+    health = {
+        "status": "ok",
+        "database": "ok",
+        "latest_nav_date": to_api_date(counts["latest_date"]) if counts.get("latest_date") else None,
+        "last_sync": meta.get("last_sync"),
+        "scheme_count": counts.get("scheme_count", 0),
+    }
+    _write_json(api_dir / "health.json", health, compact=False)
 
     log_fn(f"Exported {written:,} scheme histories in {out_dir}")
     return {
