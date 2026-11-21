@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-21T20:44:02+00:00",
-  "duration_seconds": 119.4,
+  "generated_at": "2026-11-21T21:07:37+00:00",
+  "duration_seconds": 54.2,
   "mode": "full",
   "latest_nav_date": "2026-11-22",
   "earliest_nav_date": "2012-02-17",
@@ -8,11 +8,9 @@
   "nav_rows": 5451960,
   "fund_house_count": 55,
   "navall_rows": 14240,
-  "history_rows": 189767,
-  "history_chunks": 2,
-  "errors": [
-    "2026-11-21..2026-11-21: Failed to download https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx: AMFI response did not contain a scheme table header"
-  ],
+  "history_rows": 137041,
+  "history_chunks": 1,
+  "errors": [],
   "database_bytes": 298053632,
   "source": "AMFI India"
 }
