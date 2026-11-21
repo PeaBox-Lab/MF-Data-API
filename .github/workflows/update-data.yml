@@ -1,6 +1,8 @@
 name: Update NAV data
 
 on:
+  push:
+    branches: [main]
   schedule:
     # GitHub cron is UTC. 04:15 UTC = 09:45 IST, 16:45 UTC = 22:15 IST.
     - cron: "15 4 * * *"
@@ -29,6 +31,7 @@ concurrency:
 jobs:
   update:
     name: Fetch AMFI data and build the site
+    if: github.event_name != 'push' || github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 300
     env:
