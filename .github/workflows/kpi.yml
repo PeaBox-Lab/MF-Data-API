@@ -1,0 +1,89 @@
+name: KPI Calculation
+
+on:
+  schedule:
+    # Run daily at 09:00 UTC (05:30 IST) — adjust as needed
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+    inputs:
+      force_full:
+        description: "Force a full backfill of KPI history"
+        required: false
+        default: false
+      bootstrap_days:
+        description: "History depth for a fresh KPI dataset (days)"
+        required: false
+        default: "1095"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: kpi-calculation
+  cancel-in-progress: false
+
+jobs:
+  calculate-kpis:
+    name: Calculate KPIs
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Sync AMFI NAV data (fresh input)
+        env:
+          BOOTSTRAP_DAYS: ${{ github.event.inputs.bootstrap_days || '1095' }}
+          FORCE_FULL: ${{ github.event.inputs.force_full == 'true' && 'true' || 'false' }}
+        run: |
+          set -euo pipefail
+          EXTRA=""
+          if [ "${FORCE_FULL}" = "true" ]; then EXTRA="--full"; fi
+          python -m pipeline sync --bootstrap-days "${BOOTSTRAP_DAYS}" ${EXTRA}
+
+      - name: Recalculate KPI tables
+        run: |
+          set -euo pipefail
+          python scripts/calc_kpis.py
+
+      - name: Export static API and documentation site
+        run: |
+          set -euo pipefail
+          python -m pipeline export --out public
+          python scripts/build_site.py \
+            --out public \
+            --repo-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+
+      - name: Save NAV database snapshot
+        if: always() && hashFiles('data/mfdata.db') != ''
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            data/mfdata.db
+            data/mfdata.db-wal
+            data/mfdata.db-shm
+          key: mfdata-db-${{ github.run_id }}
+
+      - name: Commit KPI updates
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No KPI changes to commit."
+          else
+            git commit -m "chore(kpi): update KPI tables $(date -u +%Y-%m-%d)"
+            git push
+          fi

@@ -422,3 +422,83 @@ def compare(
 def data_sources():
     """Return the curated directory of free mutual fund data APIs worldwide."""
     return {"data": DATA_SOURCES}
+
+
+# ============================================================
+# KPI Endpoints
+# ============================================================
+
+@router.get(
+    "/kpi/scheme/{code}",
+    response_model=dict,
+    summary="Scheme-level KPIs",
+    tags=["KPI"],
+)
+def scheme_kpi(
+    code: int,
+):
+    """Return KPIs for a specific scheme."""
+    from pipeline.store import get_connection
+    conn = get_connection()
+    row = conn.execute("SELECT * FROM scheme_kpis WHERE scheme_code=?", (code,)).fetchone()
+    if not row:
+        raise ApiError(404, f"Scheme KPI {code} not found", "NOT_FOUND")
+    cols = [c[1] for c in conn.execute("PRAGMA table_info(scheme_kpis)").fetchall()]
+    return dict(zip(cols, row, strict=False))
+
+
+@router.get(
+    "/kpi/fund-house/{name}",
+    response_model=dict,
+    summary="Fund-house-level KPIs",
+    tags=["KPI"],
+)
+def fund_house_kpi(
+    name: str,
+):
+    """Return KPIs for a specific fund house."""
+    from pipeline.store import get_connection
+    conn = get_connection()
+    row = conn.execute("SELECT * FROM fund_house_kpis WHERE fund_house=?", (name,)).fetchone()
+    if not row:
+        raise ApiError(404, f"Fund house KPI {name!r} not found", "NOT_FOUND")
+    cols = [c[1] for c in conn.execute("PRAGMA table_info(fund_house_kpis)").fetchall()]
+    return dict(zip(cols, row, strict=False))
+
+
+@router.get(
+    "/kpi/category/{cat}",
+    response_model=dict,
+    summary="Category-level KPIs",
+    tags=["KPI"],
+)
+def category_kpi(
+    cat: str,
+):
+    """Return KPIs for a specific category."""
+    from pipeline.store import get_connection
+    conn = get_connection()
+    row = conn.execute("SELECT * FROM category_kpis WHERE category=?", (cat,)).fetchone()
+    if not row:
+        raise ApiError(404, f"Category KPI {cat!r} not found", "NOT_FOUND")
+    cols = [c[1] for c in conn.execute("PRAGMA table_info(category_kpis)").fetchall()]
+    return dict(zip(cols, row, strict=False))
+
+
+@router.get(
+    "/kpi/type/{ftype}",
+    response_model=dict,
+    summary="Fund-type-level KPIs (equity/debt/hybrid)",
+    tags=["KPI"],
+)
+def type_kpi(
+    ftype: str,
+):
+    """Return KPIs for a fund type."""
+    from pipeline.store import get_connection
+    conn = get_connection()
+    row = conn.execute("SELECT * FROM type_kpis WHERE fund_type=?", (ftype,)).fetchone()
+    if not row:
+        raise ApiError(404, f"Type KPI {ftype!r} not found", "NOT_FOUND")
+    cols = [c[1] for c in conn.execute("PRAGMA table_info(type_kpis)").fetchall()]
+    return dict(zip(cols, row, strict=False))
