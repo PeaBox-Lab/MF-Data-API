@@ -16,6 +16,7 @@ def nav() -> str:
       <a href="docs.html">API reference</a>
       <a href="docs.html#static-mode">Static JSON</a>
       <a href="docs.html#updates">Update schedule</a>
+      <a href="analytics.html">Analytics</a>
       <a href="docs.html#license">License & attribution</a>
     </div>
   </div>
@@ -91,6 +92,7 @@ def footer() -> str:
       <h4>Data</h4>
       <a href="https://www.amfiindia.com/net-asset-value/nav-download" rel="noopener">AMFI India source</a>
       <a href="docs.html#updates">Update schedule</a>
+      <a href="analytics.html">Analytics</a>
       <a href="docs.html#license">License &amp; attribution</a>
     </div>
   </div>
