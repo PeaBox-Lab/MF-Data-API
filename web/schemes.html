@@ -27,6 +27,8 @@
         <a href="docs.html">Documentation</a>
         <a href="explorer.html">Explorer</a>
         <a href="schemes.html" aria-current="page">Schemes</a>
+        <a href="fund-houses.html">Fund Houses</a>
+        <a href="categories.html">Categories</a>
         <a href="status.html">Status</a>
         <a href="data-sources.html">Data Sources</a>
       </nav>
@@ -333,6 +335,11 @@
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => loadSchemes(0), 300);
   }
+
+  // Initialize search/filter variables
+  const searchInput = $("#scheme-search");
+  const fundHouseSelect = $("#fund-house-filter");
+  const categorySelect = $("#category-filter");
 
   searchInput.addEventListener("input", debouncedLoad);
   fundHouseSelect.addEventListener("change", () => loadSchemes(0));
