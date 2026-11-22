@@ -253,28 +253,202 @@
               <td>CSV / TSV / Parquet / SQLite bulk downloads</td>
             </tr>
             
-            <!-- Pakistan -->
+            <!-- Brazil -->
             <tr>
-              <td>Pakistan</td>
-              <td>Pakistan Mutual Funds (MUFAP-based)</td>
-              <td>~550 Pakistani mutual funds — daily NAV, dividends, indices</td>
-              <td>No signup / no API key (flat files + hosted REST API)</td>
+              <td>Brazil</td>
+              <td>CVM Dados Abertos (Informe Diário)</td>
+              <td>Brazilian investment funds — daily NAV, net assets, subscriptions, redemptions, unitholder count (2005+)</td>
+              <td>None</td>
+              <td>None (public CKAN API)</td>
+              <td>https://dados.cvm.gov.br/api/3</td>
+              <td>https://dados.cvm.gov.br/dataset/fi-doc-inf_diario</td>
+              <td>Official CVM (securities regulator) open data; daily CSV/ZIP updates; 12-month rolling window updated daily</td>
+            </tr>
+            <tr>
+              <td>Brazil</td>
+              <td>ANBIMA Developers (Fundos ICVM 555)</td>
+              <td>Brazilian fund registry & reference data by ANBIMA code</td>
+              <td>Free registration</td>
               <td>Not documented</td>
-              <td>https://github.com/saadsalmankhan/pakistan-mutual-funds-data</td>
-              <td>https://saadsalman.org/projects/pakistan-mutual-funds</td>
-              <td>Open dataset; not affiliated with MUFAP</td>
+              <td>https://developers.anbima.com.br</td>
+              <td>https://developers.anbima.com.br/en/fundos-icvm-555</td>
+              <td>Brazilian association of financial markets; fund metadata, classifications</td>
             </tr>
             
-            <!-- India (continued) -->
+            <!-- Canada -->
             <tr>
-              <td>India</td>
-              <td>MFapi.in</td>
-              <td>Indian mutual fund search, latest NAV, and NAV history</td>
-              <td>None (per documentation)</td>
+              <td>Canada</td>
+              <td>OpenBB / Twelve Data (free tier)</td>
+              <td>Canadian mutual funds & ETFs — NAV, holdings, performance, distributions</td>
+              <td>Free tier (API key required)</td>
+              <td>Limited on free tier</td>
+              <td>https://api.twelvedata.com</td>
+              <td>https://twelvedata.com/mutual-funds</td>
+              <td>Free tier for personal use; 300,000+ funds globally including Canada</td>
+            </tr>
+            <tr>
+              <td>Canada</td>
+              <td>SEDAR+ / CSA Filings</td>
+              <td>Canadian fund regulatory filings (Fund Facts, ETF Facts, MRFP, financial statements)</td>
+              <td>None</td>
+              <td>None</td>
+              <td>https://www.sedarplus.ca</td>
+              <td>https://www.sedarplus.ca</td>
+              <td>Official Canadian securities regulator filings; PDF/HTML; not a structured API</td>
+            </tr>
+            
+            <!-- Australia -->
+            <tr>
+              <td>Australia</td>
+              <td>Quova Funds API</td>
+              <td>Australian ETFs & managed funds — NAV, AUM, fees, holdings, distribution, APiR codes</td>
+              <td>Free tier (credits-based)</td>
+              <td>1 credit/instrument; free credits on signup</td>
+              <td>https://api.quova.io/v1/funds</td>
+              <td>https://quova.io/docs/funds/</td>
+              <td>ASX-listed & unlisted funds; holdings with weights; fresh=true for latest</td>
+            </tr>
+            <tr>
+              <td>Australia</td>
+              <td>ASIC Financial Advisers Register / APRA</td>
+              <td>Australian managed fund registrations & prudential data</td>
+              <td>None</td>
               <td>Not documented</td>
-              <td>https://api.mfapi.in/mf</td>
-              <td>https://www.mfapi.in/docs</td>
-              <td>Largest dedicated Indian NAV API; updated up to 6x daily</td>
+              <td>https://asic.gov.au/regulatory-resources/</td>
+              <td>https://asic.gov.au/</td>
+              <td>Reference registers; not a daily NAV feed</td>
+            </tr>
+            
+            <!-- United Kingdom -->
+            <tr>
+              <td>United Kingdom</td>
+              <td>FCA Financial Services Register API</td>
+              <td>UK authorised funds & managers — firm/fund authorisation records</td>
+              <td>Free developer account (API key)</td>
+              <td>Not documented</td>
+              <td>https://register.fca.org.uk/services/V0.1</td>
+              <td>https://register.fca.org.uk/Developer/s/</td>
+              <td>UK regulator register; fund authorisation status, not daily NAV</td>
+            </tr>
+            <tr>
+              <td>United Kingdom</td>
+              <td>FundFacts API (free plan)</td>
+              <td>UCITS funds & ETFs (incl. UK) — TER, risk indicator, holdings, exposures, returns by ISIN</td>
+              <td>Free plan (5 lookups/month, no card)</td>
+              <td>5 lookups/month free</td>
+              <td>https://fundfactsapi.com</td>
+              <td>https://fundfactsapi.com/answers</td>
+              <td>UCITS-compliant data; PRIIPs KID derived; 5 free ISIN lookups/month</td>
+            </tr>
+            
+            <!-- Germany -->
+            <tr>
+              <td>Germany</td>
+              <td>Deutsche Bundesbank Investment Funds Statistics</td>
+              <td>German investment funds — stock/transaction data, net assets, shares outstanding (SDMX)</td>
+              <td>None</td>
+              <td>None</td>
+              <td>https://www.bundesbank.de/statistic-rmi/StatisticDownload</td>
+              <td>https://www.bundesbank.de/en/statistics/money-and-capital-markets/investment-funds-statistics-809480</td>
+              <td>Official central bank statistics; SDMX/CSV download; monthly frequency</td>
+            </tr>
+            <tr>
+              <td>Germany</td>
+              <td>FundFacts API (free plan)</td>
+              <td>German UCITS funds & ETFs — TER, risk indicator, holdings, exposures, returns by ISIN</td>
+              <td>Free plan (5 lookups/month, no card)</td>
+              <td>5 lookups/month free</td>
+              <td>https://fundfactsapi.com</td>
+              <td>https://fundfactsapi.com/answers</td>
+              <td>UCITS-compliant; covers German-domiciled funds via ISIN</td>
+            </tr>
+            
+            <!-- Japan -->
+            <tr>
+              <td>Japan</td>
+              <td>e-Stat Japan Government Statistics API</td>
+              <td>Japanese investment trust statistics — NAV, net assets, flows (official govt data)</td>
+              <td>Free registration (App ID)</td>
+              <td>No usage limits (free)</td>
+              <td>https://api.e-stat.go.jp/rest/3.0/app/json</td>
+              <td>https://www.e-stat.go.jp/api/en/api-dev/</td>
+              <td>Official Japanese statistics portal; free API key; broad govt datasets</td>
+            </tr>
+            <tr>
+              <td>Japan</td>
+              <td>ToushinReader (Python library)</td>
+              <td>Japanese mutual fund NAV & metadata via ISIN (scrapes public disclosures)</td>
+              <td>None</td>
+              <td>Not documented</td>
+              <td>https://github.com/sawadyrr5/ToushinReader</td>
+              <td>https://github.com/sawadyrr5/ToushinReader</td>
+              <td>Open-source Python library; ISIN-based; not an official API</td>
+            </tr>
+            
+            <!-- Singapore -->
+            <tr>
+              <td>Singapore</td>
+              <td>MAS API (Monetary Authority of Singapore)</td>
+              <td>Singapore authorised funds, fund management companies, financial institution registers</td>
+              <td>None (currently free)</td>
+              <td>Not documented</td>
+              <td>https://eservices.mas.gov.sg/apimg-portal/api-catalog</td>
+              <td>https://developer.tech.gov.sg/products/categories/data-and-apis/mas-api/overview</td>
+              <td>Singapore central bank API portal; fund registers & regulatory data; free</td>
+            </tr>
+            <tr>
+              <td>Singapore</td>
+              <td>data.gov.sg (Unit Trust Statistics)</td>
+              <td>Singapore unit trust / CPFIS fund statistics — quarterly NAV, AUM, flows</td>
+              <td>None</td>
+              <td>None</td>
+              <td>https://data.gov.sg/api/action/datastore_search</td>
+              <td>https://data.gov.sg/datasets</td>
+              <td>Singapore open data portal; CKAN API; quarterly frequency</td>
+            </tr>
+            
+            <!-- South Africa -->
+            <tr>
+              <td>South Africa</td>
+              <td>FundsData Online (free tier)</td>
+              <td>South African unit trusts — fact sheets, NAV, performance, fund profiles</td>
+              <td>None for free view</td>
+              <td>Not documented</td>
+              <td>https://www.fundsdata.co.za</td>
+              <td>https://profile.co.za/unit-trusts-data/fundsdata-online.html</td>
+              <td>Leading SA fund data provider; free fact sheets; paid for full holdings/API</td>
+            </tr>
+            <tr>
+              <td>South Africa</td>
+              <td>African Mutual Funds API</td>
+              <td>African mutual funds — returns, fund size estimates, net flows</td>
+              <td>Free API key</td>
+              <td>Not documented</td>
+              <td>https://africanmutualfunds.com/api</td>
+              <td>https://apis.io/providers/africanmutualfunds-com/</td>
+              <td>Pan-African coverage incl. SA; free key; limited to summary data</td>
+            </tr>
+            
+            <!-- Global (additional) -->
+            <tr>
+              <td>Global</td>
+              <td>OpenBB Platform (free, open-source)</td>
+              <td>Global funds/ETFs — NAV, holdings, fundamentals via unified Python/REST interface</td>
+              <td>None (self-hosted)</td>
+              <td>None (local)</td>
+              <td>https://github.com/OpenBB-finance/OpenBB</td>
+              <td>https://docs.openbb.co</td>
+              <td>Open-source; aggregates 50+ data vendors; extendable; self-hosted API server</td>
+            </tr>
+            <tr>
+              <td>Global</td>
+              <td>3Spread N-PORT API (Community tier)</td>
+              <td>US fund holdings (N-PORT) + global ETF holdings — 10k req/day free</td>
+              <td>Free key (Community tier)</td>
+              <td>10,000 req/day (600/min)</td>
+              <td>https://3spread.com/data/fund-portfolios-nport</td>
+              <td>https://3spread.com/data/fund-portfolios-nport</td>
+              <td>Parsed SEC N-PORT filings; quarterly holdings with ~60 day lag</td>
             </tr>
           </tbody>
         </table>
