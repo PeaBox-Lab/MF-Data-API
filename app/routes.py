@@ -3,19 +3,26 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Path, Query
 
 from pipeline.dates import parse_flexible_date, to_api_date, to_iso
+from pipeline.export_static import DATA_SOURCES
 from pipeline.store import Store
 
 from .deps import ApiError, get_store
 from .schemas import (
     Category,
+    CategoryStatsResponse,
+    CompareResponse,
+    DataSourcesResponse,
     FundHouse,
+    FundHouseStats,
     Health,
     LatestNav,
+    MoverItem,
+    MoverResponse,
     NavOnDate,
     SchemeHistory,
     SchemeMeta,
@@ -255,6 +262,21 @@ def categories(store: StoreDep):
 
 
 @router.get(
+    "/categories/stats",
+    response_model=CategoryStatsResponse,
+    summary="Category stats with counts and latest NAV date",
+    tags=["Reference"],
+)
+def category_stats(
+    store: StoreDep,
+    scheme_type: Annotated[str | None, Query(description="Scheme type filter, e.g. Open Ended Schemes")] = None,
+    scheme_category: Annotated[str | None, Query(description="Scheme category filter, e.g. Equity Scheme")] = None,
+):
+    _ensure_data(store)
+    return store.category_stats(scheme_type=scheme_type, scheme_category=scheme_category)
+
+
+@router.get(
     "/nav/{date}",
     response_model=NavOnDate,
     summary="All NAVs published on a date",
@@ -338,3 +360,65 @@ def health(store: StoreDep):
         "last_sync": meta.get("last_sync"),
         "scheme_count": counts.get("scheme_count", 0),
     }
+
+
+@router.get("/movers/latest", response_model=MoverResponse, summary="Top NAV movers", tags=["NAV"])
+def movers_latest(
+    store: StoreDep,
+    limit: Annotated[int, Query(ge=1, le=100)] = 25,
+    direction: Annotated[Literal["gainers", "losers"], Query(description="Sort direction")] = "gainers",
+):
+    _ensure_data(store)
+    movers = store.movers(limit=limit)
+    # direction=gainers => sort descending change_pct; direction=losers => ascending
+    reverse = direction == "gainers"
+    sorted_movers = sorted(
+        [m for m in movers if m["change_pct"] is not None],
+        key=lambda x: x["change_pct"] if x["change_pct"] is not None else -float("inf"),
+        reverse=reverse,
+    )
+    return {"data": sorted_movers, "count": len(sorted_movers)}
+
+
+@router.get("/movers/search", response_model=list[MoverItem], summary="Search movers by fund house", tags=["NAV"])
+def movers_search(
+    store: StoreDep,
+    q: Annotated[str, Query(min_length=1, max_length=100, description="Fund house name filter")],
+):
+    _ensure_data(store)
+    movers = store.movers(limit=200)
+    filtered = [
+        m for m in movers
+        if q.lower() in m.get("fundHouse", "").lower()
+    ]
+    return filtered
+
+
+@router.get("/fund-houses/{fund_house}/stats", response_model=FundHouseStats, summary="Fund house stats", tags=["Reference"])
+def fund_house_stats(
+    store: StoreDep,
+    fund_house: Annotated[str, Path(description="Fund house / AMC name")],
+):
+    _ensure_data(store)
+    stats = store.fund_house_stats(fund_house)
+    if stats is None:
+        raise ApiError(404, f"Fund house {fund_house!r} not found", "NOT_FOUND")
+    return stats
+
+
+@router.get("/compare", response_model=CompareResponse, summary="Compare multiple schemes", tags=["NAV"])
+def compare(
+    store: StoreDep,
+    codes: Annotated[str, Query(description="Comma-separated AMFI scheme codes, e.g. 125497,100119")],
+):
+    _ensure_data(store)
+    code_list = [int(c.strip()) for c in codes.split(",") if c.strip()]
+    if not code_list:
+        raise ApiError(400, "At least one scheme code required", "BAD_REQUEST")
+    return {"data": store.compare_schemes(code_list)}
+
+
+@router.get("/data-sources", response_model=DataSourcesResponse, summary="Free mutual fund data API directory", tags=["Meta"])
+def data_sources():
+    """Return the curated directory of free mutual fund data APIs worldwide."""
+    return {"data": DATA_SOURCES}

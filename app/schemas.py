@@ -76,3 +76,62 @@ class Health(BaseModel):
 class ErrorResponse(BaseModel):
     status: str = Field(..., examples=["NOT_FOUND"])
     message: str = Field(..., examples=["Scheme 999999 not found"])
+
+
+class MoverItem(BaseModel):
+    schemeCode: int = Field(..., examples=[125497])
+    schemeName: str = Field(..., examples=["SBI Small Cap Fund - Direct Plan - Growth"])
+    fundHouse: str = Field(..., examples=["SBI Mutual Fund"])
+    nav: str = Field(..., examples=["210.02130"])
+    date: str = Field(..., examples=["20-11-2026"])
+    change_pct: float | None = Field(None, examples=[1.23])
+    change_abs: float | None = Field(None, examples=[2.55])
+
+
+class MoverResponse(BaseModel):
+    data: list[MoverItem]
+    count: int
+
+
+class FundHouseStats(BaseModel):
+    fund_house: str = Field(..., examples=["SBI Mutual Fund"])
+    scheme_count: int = Field(..., examples=[420])
+    latest_nav_date: str | None = None
+    categories: list[Category]
+
+
+class CompareItem(BaseModel):
+    schemeCode: int = Field(..., examples=[125497])
+    schemeName: str = Field(..., examples=["SBI Small Cap Fund - Direct Plan - Growth"])
+    fundHouse: str = Field(..., examples=["SBI Mutual Fund"])
+    latestNav: float = Field(..., examples=[210.02130])
+    latestDate: str = Field(..., examples=["20-11-2026"])
+    schemeCategory: str = Field(..., examples=["Equity Scheme - Small Cap Fund"])
+    navChange_pct: float | None = None
+
+
+class CompareResponse(BaseModel):
+    data: list[CompareItem]
+
+
+class CategoryStatsResponse(BaseModel):
+    scheme_type: str | None = None
+    scheme_category: str | None = None
+    total_schemes: int = Field(..., examples=[14240])
+    latest_nav_date: str | None = None
+    categories: list[Category]
+
+
+class DataSourceItem(BaseModel):
+    name: str = Field(..., examples=["MF Data API"])
+    region: str = Field(..., examples=["India"])
+    coverage: str = Field(..., examples=["14,000+ schemes, NAV history, metadata"])
+    auth: str = Field(..., examples=["None"])
+    rate_limit: str | None = Field(None, examples=["120 req/min per IP"])
+    base_url: str = Field(..., examples=["https://api.example.com"])
+    docs_url: str | None = None
+    notes: str | None = None
+
+
+class DataSourcesResponse(BaseModel):
+    data: list[DataSourceItem]

@@ -17,6 +17,162 @@ from .store import Store
 
 VERSION = "1.0.0"
 
+# ------------------------------------------------------------------ data sources
+# Curated list of free, open mutual fund / ETF / fund data APIs worldwide.
+# Static JSON export keeps this available for static (GitHub Pages) deployments.
+DATA_SOURCES = [
+    {
+        "name": "MF Data API (this project)",
+        "region": "India",
+        "coverage": "Indian mutual fund NAVs + scheme metadata (AMFI source).",
+        "auth": "None — no key or registration",
+        "rate_limit": "120 req/min per IP (live service); static JSON is uncapped",
+        "base_url": "https://peabox-lab.github.io/MF-Data-API/api/v1",
+        "docs_url": "https://peabox-lab.github.io/MF-Data-API/docs.html",
+        "notes": "Live FastAPI service plus static JSON export for GitHub Pages.",
+    },
+    {
+        "name": "MFapi.in",
+        "region": "India",
+        "coverage": "Indian mutual fund search, latest NAV, and NAV history.",
+        "auth": "None (per documentation)",
+        "rate_limit": "Not documented — documented as no rate limits",
+        "base_url": "https://api.mfapi.in/mf",
+        "docs_url": "https://www.mfapi.in/docs",
+        "notes": "Largest dedicated Indian NAV API; updated up to 6x daily.",
+    },
+    {
+        "name": "mfdata.in",
+        "region": "India",
+        "coverage": "Indian NAV, portfolio holdings, sector analysis, ratios, returns (14,000+ schemes, 51 AMCs).",
+        "auth": "None required",
+        "rate_limit": "Standard 30/min; analytics 10/min; bulk 10/min",
+        "base_url": "https://api.mfdata.in/api/v1",
+        "docs_url": "https://mfdata.in/docs",
+        "notes": "Deep per-scheme enrichment: holdings, risk metrics, sector allocation.",
+    },
+    {
+        "name": "Charlie API (charliealpha.in)",
+        "region": "India",
+        "coverage": "Indian mutual funds & ETFs, NPS, SIF, GIFT City funds — latest/historical NAV, holdings.",
+        "auth": "Unauthenticated",
+        "rate_limit": "50 req / 10 s",
+        "base_url": "https://api.charliealpha.in/v1",
+        "docs_url": "https://api.charliealpha.in/v1",
+        "notes": "GET-only endpoints; accepts AMFI scheme code or ISIN.",
+    },
+    {
+        "name": "mfnav.in",
+        "region": "India",
+        "coverage": "Indian NAV history from Jan 2006 (38,000+ schemes, 76 fund houses).",
+        "auth": "None",
+        "rate_limit": "120 req/min per IP",
+        "base_url": "https://mfnav.in/api",
+        "docs_url": "https://mfnav.in/api-docs",
+        "notes": "Free for any use including commercial; sync your own mirror daily.",
+    },
+    {
+        "name": "TickerInside",
+        "region": "USA (ETFs)",
+        "coverage": "US ETFs + large US mutual funds — portfolio holdings, overlap, holders.",
+        "auth": "None — no key, no account, no quota",
+        "rate_limit": "None for normal use",
+        "base_url": "https://tickerinside.com/api/v1",
+        "docs_url": "https://tickerinside.com/api",
+        "notes": "CC BY 4.0. Derived from issuer holdings files and SEC Form N-PORT.",
+    },
+    {
+        "name": "FundCensus",
+        "region": "USA",
+        "coverage": "US registered fund (mutual/ETF/CEF) holdings — Form N-PORT positions.",
+        "auth": "Key optional (authenticated raises daily allowance)",
+        "rate_limit": "Unauthenticated: per-IP limits, lists stop at first 500 rows",
+        "base_url": "https://fundcensus.com/api",
+        "docs_url": "https://fundcensus.com/openapi.json",
+        "notes": "Holdings are quarterly snapshots (~60 days lag).",
+    },
+    {
+        "name": "Leeway Fonds-API",
+        "region": "Europe + USA",
+        "coverage": "40,000+ European funds NAV & reference data via ISIN; US funds with holdings, TER, returns.",
+        "auth": "Free account token",
+        "rate_limit": "50 requests/day (free account)",
+        "base_url": "https://api.leeway.tech/api/v1",
+        "docs_url": "https://leeway.tech/data-api/fonds",
+        "notes": "Free tier is non-commercial use.",
+    },
+    {
+        "name": "Tigzig Public APIs",
+        "region": "India + Global macro",
+        "coverage": "AMFI MF NAV history (38,000+ schemes since April 2006); global macro indicators (~300).",
+        "auth": "None",
+        "rate_limit": "Not documented",
+        "base_url": "https://api.tigzig.com/v1",
+        "docs_url": "https://www.tigzig.com/apis",
+        "notes": "CSV / TSV / Parquet / SQLite bulk downloads.",
+    },
+    {
+        "name": "Pakistan Mutual Funds (MUFAP-based)",
+        "region": "Pakistan",
+        "coverage": "~550 Pakistani mutual funds — daily NAV, dividends, indices.",
+        "auth": "No signup / no API key (flat files + hosted REST API)",
+        "rate_limit": "Not documented",
+        "base_url": "https://github.com/saadsalmankhan/pakistan-mutual-funds-data",
+        "docs_url": "https://saadsalman.org/projects/pakistan-mutual-funds",
+        "notes": "Open dataset; not affiliated with MUFAP.",
+    },
+    {
+        "name": "Market Data (api.marketdata.app)",
+        "region": "USA",
+        "coverage": "US mutual fund candlestick / OHLC historical data.",
+        "auth": "Free trial account (no card)",
+        "rate_limit": "100 requests/day on free tier",
+        "base_url": "https://api.marketdata.app/v1",
+        "docs_url": "https://www.marketdata.app/api/funds/how-to-use/",
+        "notes": "Free plan is for personal use.",
+    },
+    {
+        "name": "iTick Mutual Funds API",
+        "region": "Global (focus: funds/ETFs)",
+        "coverage": "Mutual funds, ETFs — end-of-day and historical data.",
+        "auth": "Free plan (personal use only)",
+        "rate_limit": "5 calls/minute free plan",
+        "base_url": "https://itick.org/en/products/fund",
+        "docs_url": "https://itick.org/en/products/fund",
+        "notes": "Free tier restricted to personal use.",
+    },
+    {
+        "name": "SEC EDGAR (via edgartools)",
+        "region": "USA",
+        "coverage": "US mutual fund / ETF holdings from Form N-PORT filings — every position.",
+        "auth": "None",
+        "rate_limit": "None (public EDGAR)",
+        "base_url": "https://www.sec.gov/edgar",
+        "docs_url": "https://edgartools.readthedocs.io",
+        "notes": "US government work — public domain; monthly N-PORT holdings with lag.",
+    },
+    {
+        "name": "ESMA Registers",
+        "region": "Europe (EU)",
+        "coverage": "EU investment fund / AIFMD registers — authorised funds & managers.",
+        "auth": "None",
+        "rate_limit": "Not documented",
+        "base_url": "https://registers.esma.europa.eu/publication/solr/esma_registers_*",
+        "docs_url": "https://www.esma.europa.eu/publications-and-data/databases-and-registers",
+        "notes": "Reference registers rather than daily NAV feed.",
+    },
+    {
+        "name": "Info-financiere.gouv.fr API",
+        "region": "France",
+        "coverage": "French regulated financial information (stock market, funds).",
+        "auth": "Not documented",
+        "rate_limit": "Not documented",
+        "base_url": "https://info-financiere.gouv.fr/pages/api0/",
+        "docs_url": "https://info-financiere.gouv.fr/pages/api0/",
+        "notes": "French official centralised mechanism.",
+    },
+]
+
 
 def _write_json(path: Path, payload, *, compact: bool = True) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -149,6 +305,8 @@ def export_static(
                 "categories": "categories.json",
                 "recent_dates": "dates.json",
                 "health": "health.json",
+                "movers": "movers.json",
+                "data_sources": "data-sources.json",
             },
         },
         compact=False,
@@ -165,11 +323,21 @@ def export_static(
     }
     _write_json(api_dir / "health.json", health, compact=False)
 
+    # ---------------------------------------------------------------- extras
+    # Top movers (computed once at export time)
+    movers = store.movers(limit=50)
+    _write_json(api_dir / "movers.json", {"data": movers, "count": len(movers)}, compact=False)
+
+    # Curated directory of free mutual fund data APIs worldwide
+    _write_json(api_dir / "data-sources.json", DATA_SOURCES, compact=False)
+
     log_fn(f"Exported {written:,} scheme histories in {out_dir}")
     return {
         "out_dir": str(out_dir),
         "schemes": len(schemes),
         "scheme_files": written,
         "latest_rows": len(latest),
+        "movers": len(movers),
+        "data_sources": len(DATA_SOURCES),
         "generated_at": generated_at,
     }

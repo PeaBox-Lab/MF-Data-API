@@ -392,6 +392,8 @@
     },
     meta: { label: "GET /mf/{code}/meta — metadata", path: "/mf/{code}/meta", fields: ["code"] },
     allLatest: { label: "GET /mf/latest — latest NAVs", path: "/mf/latest", fields: ["limit", "offset"] },
+    movers: { label: "GET /movers/latest — top NAV movers", path: "/movers/latest", fields: ["limit", "direction"] },
+    dataSources: { label: "GET /data-sources — free data API directory", path: "/data-sources", fields: [] },
     houses: { label: "GET /fund-houses — fund houses", path: "/fund-houses", fields: [] },
     categories: { label: "GET /categories — categories", path: "/categories", fields: [] },
     navDate: { label: "GET /nav/{date} — NAVs by date", path: "/nav/{date}", fields: ["date", "limit"] },
@@ -518,6 +520,10 @@
           return apiUrl("/fund-houses.json");
         case "categories":
           return apiUrl("/categories.json");
+        case "movers":
+          return apiUrl("/movers.json");
+        case "dataSources":
+          return apiUrl("/data-sources.json");
         case "stats":
           return apiUrl("/stats.json");
         case "health":

@@ -27,6 +27,7 @@
         <a href="docs.html">Documentation</a>
         <a href="explorer.html">Explorer</a>
         <a href="status.html">Status</a>
+        <a href="data-sources.html">Data Sources</a>
       </nav>
       <div class="nav-actions">
         <a class="btn btn-ghost btn-sm" data-swagger href="/api/docs">Swagger UI</a>
@@ -69,11 +70,16 @@
         <a href="#endpoint-latest">Latest NAV</a>
         <a href="#endpoint-all-latest">All latest NAVs</a>
         <a href="#endpoint-meta">Scheme metadata</a>
+        <a href="#endpoint-movers">Top movers</a>
+        <a href="#endpoint-compare">Compare schemes</a>
         <a href="#endpoint-houses">Fund houses</a>
+        <a href="#endpoint-house-stats">Fund house stats</a>
         <a href="#endpoint-categories">Categories</a>
+        <a href="#endpoint-category-stats">Category stats</a>
         <a href="#endpoint-nav-date">NAVs by date</a>
         <a href="#endpoint-stats">Statistics</a>
         <a href="#endpoint-health">Health</a>
+        <a href="#endpoint-data-sources">Data sources directory</a>
 
         <h4>Guides</h4>
         <a href="#response-format">Response format</a>
@@ -126,6 +132,8 @@ console.log(meta.scheme_name, data[0]);</code></pre>
             structured access. For production use, prefer a small script that caches
             the response.
           </p>
+          <h3>Compare two schemes</h3>
+          <pre><code class="language-bash">curl "https://api.example.com/api/v1/compare?codes=125497,100119"</code></pre>
         </section>
 
         <section class="doc-section" id="base-url" data-doc-section>
@@ -477,6 +485,156 @@ X-RateLimit-Remaining: 0
           </div>
         </section>
 
+        <section class="doc-section" id="endpoint-movers" data-doc-section>
+          <h2>Top movers</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/movers/latest</code></div>
+            <div class="endpoint-body">
+              <p>Returns schemes with the largest one-day NAV change, computed between the two most recent NAV dates for each scheme.</p>
+              <div class="table-wrap">
+                <table class="params">
+                  <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>limit</code></td><td>integer</td><td>1–100. Default 25.</td></tr>
+                    <tr><td><code>direction</code></td><td>string</td><td><code>gainers</code> (default) or <code>losers</code>.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/movers/latest?limit=3&amp;direction=gainers"</code></pre>
+              <pre><code class="language-json">{
+  "data": [
+    {
+      "schemeCode": 125497,
+      "schemeName": "SBI Small Cap Fund - Direct Plan - Growth",
+      "fundHouse": "SBI Mutual Fund",
+      "nav": "210.02130",
+      "date": "20-11-2026",
+      "change_pct": 1.23,
+      "change_abs": 2.55
+    }
+  ],
+  "count": 1
+}</code></pre>
+              <p class="text-sm muted">Static mode: <code>/api/v1/movers.json</code> (top 50 by 1-day gain).</p>
+            </div>
+          </div>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/movers/search?q=</code></div>
+            <div class="endpoint-body">
+              <p>Filters the movers list by fund house name (case-insensitive). Live API only.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="endpoint-compare" data-doc-section>
+          <h2>Compare schemes</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/compare?codes=</code></div>
+            <div class="endpoint-body">
+              <p>Returns metadata and the latest NAV for several schemes in one call.</p>
+              <div class="table-wrap">
+                <table class="params">
+                  <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>codes</code></td><td>string (required)</td><td>Comma-separated AMFI scheme codes, e.g. <code>125497,100119</code>.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/compare?codes=125497,100119"</code></pre>
+              <pre><code class="language-json">{
+  "data": [
+    {
+      "schemeCode": 125497,
+      "schemeName": "SBI Small Cap Fund - Direct Plan - Growth",
+      "fundHouse": "SBI Mutual Fund",
+      "latestNav": 210.0213,
+      "latestDate": "20-11-2026",
+      "schemeCategory": "Equity Scheme - Small Cap Fund",
+      "navChange_pct": null
+    }
+  ]
+}</code></pre>
+              <p class="text-sm muted">Live API only; unknown codes are skipped.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="endpoint-house-stats" data-doc-section>
+          <h2>Fund house stats</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/fund-houses/{fund_house}/stats</code></div>
+            <div class="endpoint-body">
+              <p>Aggregated stats for one AMC: scheme count, latest NAV date, and a category breakdown.</p>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/fund-houses/SBI%20Mutual%20Fund/stats"</code></pre>
+              <pre><code class="language-json">{
+  "fund_house": "SBI Mutual Fund",
+  "scheme_count": 494,
+  "latest_nav_date": "20-11-2026",
+  "categories": [
+    { "schemeType": "Open Ended Schemes", "schemeCategory": "Equity Scheme - Small Cap Fund", "schemeCount": 12 }
+  ]
+}</code></pre>
+              <p class="text-sm muted">Live API only (static export includes <code>/api/v1/fund-houses.json</code> with scheme counts).</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="endpoint-category-stats" data-doc-section>
+          <h2>Category stats</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/categories?scheme_type=&amp;scheme_category=</code></div>
+            <div class="endpoint-body">
+              <p>Filters the category list by scheme type and/or category and returns matching counts plus the latest NAV date.</p>
+              <div class="table-wrap">
+                <table class="params">
+                  <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>scheme_type</code></td><td>string</td><td>e.g. <code>Open Ended Schemes</code>.</td></tr>
+                    <tr><td><code>scheme_category</code></td><td>string</td><td>e.g. <code>Equity Scheme</code>.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/categories?scheme_type=Open%20Ended%20Schemes"</code></pre>
+              <pre><code class="language-json">{
+  "scheme_type": "Open Ended Schemes",
+  "scheme_category": null,
+  "total_schemes": 12000,
+  "latest_nav_date": "20-11-2026",
+  "categories": [
+    { "schemeType": "Open Ended Schemes", "schemeCategory": "Equity Scheme - Small Cap Fund", "schemeCount": 42 }
+  ]
+}</code></pre>
+              <p class="text-sm muted">Live API only; static export ships the unfiltered <code>/api/v1/categories.json</code>.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="endpoint-data-sources" data-doc-section>
+          <h2>Data sources directory</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/data-sources</code></div>
+            <div class="endpoint-body">
+              <p>Returns a curated directory of free, open mutual fund / ETF data APIs worldwide (India, USA, Europe, Pakistan and global).</p>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/data-sources"</code></pre>
+              <pre><code class="language-json">{
+  "data": [
+    {
+      "name": "MFapi.in",
+      "region": "India",
+      "coverage": "Indian mutual fund search, latest NAV, and NAV history.",
+      "auth": "None (per documentation)",
+      "rate_limit": "Not documented",
+      "base_url": "https://api.mfapi.in/mf",
+      "docs_url": "https://www.mfapi.in/docs",
+      "notes": "Largest dedicated Indian NAV API."
+    }
+  ]
+}</code></pre>
+              <p class="text-sm muted">Static mode: <code>/api/v1/data-sources.json</code>. See the <a href="data-sources.html">Data Sources</a> page for the browsable directory.</p>
+            </div>
+          </div>
+        </section>
+
         <section class="doc-section" id="response-format" data-doc-section>
           <h2>Response format</h2>
           <p>History responses always use the same envelope:</p>
@@ -540,6 +698,8 @@ X-RateLimit-Remaining: 0
                 <tr><td><code>/api/v1/fund-houses</code></td><td><code>/api/v1/fund-houses.json</code></td></tr>
                 <tr><td><code>/api/v1/categories</code></td><td><code>/api/v1/categories.json</code></td></tr>
                 <tr><td><code>/api/v1/stats</code></td><td><code>/api/v1/stats.json</code></td></tr>
+                <tr><td><code>/api/v1/movers/latest</code></td><td><code>/api/v1/movers.json</code></td></tr>
+                <tr><td><code>/api/v1/data-sources</code></td><td><code>/api/v1/data-sources.json</code></td></tr>
                 <tr><td><code>/api/v1/nav/{date}</code></td><td>Not available (use per-scheme files)</td></tr>
               </tbody>
             </table>
@@ -691,6 +851,7 @@ python -m pipeline serve --port 8000</code></pre>
             <li>Initial release: scheme list, search, history, latest NAV and metadata endpoints.</li>
             <li>Reference endpoints for fund houses, categories and by-date NAVs.</li>
             <li>Daily AMFI ingestion pipeline with SQLite storage and static JSON export.</li>
+            <li>New endpoints for top movers, fund house stats, category stats, scheme comparison, and free data sources directory.</li>
             <li>GitHub Actions workflow, Docker image, documentation site and API explorer.</li>
           </ul>
         </section>

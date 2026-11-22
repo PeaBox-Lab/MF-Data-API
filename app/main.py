@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -159,6 +158,12 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
                 "all_latest": f"{settings.api_prefix}/mf/latest",
                 "stats": f"{settings.api_prefix}/stats",
                 "health": f"{settings.api_prefix}/health",
+                "movers": f"{settings.api_prefix}/movers/latest",
+                "movers-search": f"{settings.api_prefix}/movers/search",
+                "fund-houses/{name}": f"{settings.api_prefix}/fund-houses/{{fund_house}}/stats",
+                "categories": f"{settings.api_prefix}/categories",
+                "compare": f"{settings.api_prefix}/compare",
+                "data-sources": f"{settings.api_prefix}/data-sources",
             },
         }
 

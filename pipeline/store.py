@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from .amfi import SchemeRecord
-from .dates import to_iso
+from .dates import to_api_date, to_iso
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS schemes (
@@ -494,3 +494,197 @@ class Store:
             return bool(row and row["n"])
         except sqlite3.Error:
             return False
+
+    def movers(self, *, limit: int = 25) -> list[dict]:
+        """Return top ``limit`` schemes with biggest 1-day NAV change.
+
+        Schemes are sorted by absolute change % descending.
+        Returns list of dicts with schemeCode, schemeName, fundHouse, nav,
+        date, change_pct, change_abs.
+        """
+        # Use window function to get latest 2 NAVs per scheme from nav_history
+        sql = """
+            WITH ranked AS (
+                SELECT h.scheme_code, h.date, h.nav,
+                       ROW_NUMBER() OVER (PARTITION BY h.scheme_code ORDER BY h.date DESC) AS rn
+                FROM nav_history h
+            )
+            SELECT r1.scheme_code, r1.date AS latest_date, r1.nav AS latest_nav,
+                   r2.nav AS prev_nav
+            FROM ranked r1
+            LEFT JOIN ranked r2 ON r2.scheme_code = r1.scheme_code AND r2.rn = 2
+            WHERE r1.rn = 1
+            ORDER BY (r1.nav - r2.nav) / NULLIF(r2.nav, 0) DESC
+            LIMIT ?
+        """
+        with self.connect(readonly=True) as conn:
+            rows = conn.execute(sql, (limit,)).fetchall()
+
+        # Join with schemes for metadata
+        codes = [row["scheme_code"] for row in rows]
+        if not codes:
+            return []
+        placeholders = ",".join("?" * len(codes))
+        meta_sql = f"SELECT scheme_code, scheme_name, fund_house FROM schemes WHERE scheme_code IN ({placeholders})"
+        with self.connect(readonly=True) as conn:
+            meta_rows = [dict(r) for r in conn.execute(meta_sql, codes).fetchall()]
+        meta_map = {m["scheme_code"]: m for m in meta_rows}
+
+        result = []
+        for row in rows:
+            code = row["scheme_code"]
+            meta = meta_map.get(code, {})
+            latest_nav = row["latest_nav"]
+            prev_nav = row["prev_nav"]
+            if prev_nav is not None and prev_nav != 0:
+                change_pct = float(f"{(latest_nav - prev_nav) / prev_nav * 100:.2f}")
+                change_abs = float(round(latest_nav - prev_nav, 5))
+            else:
+                change_pct = None
+                change_abs = None
+            result.append({
+                "schemeCode": code,
+                "schemeName": meta.get("scheme_name", ""),
+                "fundHouse": meta.get("fund_house", ""),
+                "nav": f"{latest_nav:.5f}",
+                "date": to_api_date(row["latest_date"]),
+                "change_pct": change_pct,
+                "change_abs": change_abs,
+            })
+        return result
+
+    def fund_house_stats(self, fund_house: str) -> dict | None:
+        """Return aggregated stats for one fund house (AMC)."""
+        with self.connect(readonly=True) as conn:
+            # total schemes under this fund house
+            row = conn.execute(
+                """
+                SELECT COUNT(*) AS scheme_count
+                FROM schemes WHERE fund_house = ?
+                """,
+                (fund_house,),
+            ).fetchone()
+            if row is None or row["scheme_count"] == 0:
+                return None
+            scheme_count = row["scheme_count"]
+            # latest date for schemes under this house
+            latest = conn.execute(
+                """
+                SELECT MAX(s.latest_date) AS latest_date
+                FROM schemes s
+                JOIN nav_history h ON h.scheme_code = s.scheme_code
+                WHERE s.fund_house = ?
+                """,
+                (fund_house,),
+            ).fetchone()
+            latest_date = latest["latest_date"] if latest else None
+            # categories breakdown
+            cats = conn.execute(
+                """
+                SELECT s.scheme_type, s.scheme_category, COUNT(*) AS schemeCount
+                FROM schemes s
+                WHERE s.fund_house = ?
+                GROUP BY s.scheme_type, s.scheme_category
+                ORDER BY s.scheme_type, s.scheme_category COLLATE NOCASE
+                """,
+                (fund_house,),
+            ).fetchall()
+            categories = [
+                {
+                    "schemeType": cat["scheme_type"],
+                    "schemeCategory": cat["scheme_category"],
+                    "schemeCount": cat["schemeCount"],
+                }
+                for cat in cats
+            ]
+        return {
+            "fund_house": fund_house,
+            "scheme_count": scheme_count,
+            "latest_nav_date": to_api_date(latest_date) if latest_date else None,
+            "categories": categories,
+        }
+
+    def category_stats(self, scheme_type: str | None = None, scheme_category: str | None = None) -> dict:
+        """Return aggregated stats for one category (or all, filtered by type/category)."""
+        with self.connect(readonly=True) as conn:
+            clauses: list[str] = []
+            params: list = []
+            if scheme_type:
+                clauses.append("s.scheme_type = ?")
+                params.append(scheme_type)
+            if scheme_category:
+                clauses.append("s.scheme_category = ?")
+                params.append(scheme_category)
+            where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+
+            row = conn.execute(
+                f"""
+                SELECT COUNT(*) AS total
+                FROM schemes s
+                {where}
+                """,
+                params,
+            ).fetchone()
+            total = row["total"] if row else 0
+
+            latest_row = conn.execute(
+                f"""
+                SELECT MAX(s.latest_date) AS latest_date
+                FROM schemes s
+                {where}
+                JOIN nav_history h ON h.scheme_code = s.scheme_code
+                """,
+                params,
+            ).fetchone()
+            latest_date = latest_row["latest_date"] if latest_row else None
+
+            cat_rows = conn.execute(
+                f"""
+                SELECT s.scheme_type AS schemeType,
+                       s.scheme_category AS schemeCategory,
+                       COUNT(*) AS schemeCount
+                FROM schemes s
+                {where}
+                GROUP BY s.scheme_type, s.scheme_category
+                ORDER BY s.scheme_type, s.scheme_category COLLATE NOCASE
+                """,
+                params,
+            ).fetchall()
+
+            categories = [
+                {
+                    "schemeType": cat["schemeType"],
+                    "schemeCategory": cat["schemeCategory"],
+                    "schemeCount": cat["schemeCount"],
+                }
+                for cat in cat_rows
+            ]
+
+            return {
+                "scheme_type": scheme_type,
+                "scheme_category": scheme_category,
+                "total_schemes": total,
+                "latest_nav_date": to_api_date(latest_date) if latest_date else None,
+                "categories": categories,
+            }
+
+    def compare_schemes(self, codes: list[int]) -> list[dict]:
+        """Return metadata + latest NAV for the given scheme codes."""
+        results = []
+        for code in codes:
+            meta = self.get_scheme(code)
+            if meta is None:
+                continue
+            row = self.latest_for(code)
+            if row is None:
+                continue
+            results.append({
+                "schemeCode": code,
+                "schemeName": meta["scheme_name"],
+                "fundHouse": meta["fund_house"],
+                "latestNav": row[1],
+                "latestDate": to_api_date(row[0]),
+                "schemeCategory": meta["scheme_category"],
+                "navChange_pct": None,  # could be computed if needed
+            })
+        return results

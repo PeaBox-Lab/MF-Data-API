@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Free Mutual Fund Data APIs — MF Data API</title>
+  <meta name="description" content="Curated directory of free, open mutual fund / ETF data APIs worldwide: India, USA, Europe and beyond. NAV history, holdings, metadata — no API key required.">
+  <meta name="theme-color" content="#060b16">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="MF Data API home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+          </svg>
+        </span>
+        <span>MF Data API<small>Indian mutual fund NAV</small></span>
+      </a>
+      <nav class="nav-links" id="site-nav" aria-label="Main navigation">
+        <a href="index.html#features">Features</a>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">Explorer</a>
+        <a href="schemes.html">Schemes</a>
+        <a href="fund-houses.html">Fund Houses</a>
+        <a href="categories.html">Categories</a>
+        <a href="data-sources.html" aria-current="page">Data Sources</a>
+        <a href="status.html">Status</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-ghost btn-sm" data-swagger href="/api/docs">Swagger UI</a>
+        <a class="btn btn-primary btn-sm" href="explorer.html">Try it</a>
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="site-nav">☰</button>
+      </div>
+    </div>
+  </header>
+  <main id="main">
+    <section class="docs-hero">
+      <div class="container">
+        <span class="eyebrow">Global directory</span>
+        <h1>Free mutual fund data APIs</h1>
+        <p>A curated list of free, open, and publicly accessible APIs for Indian, US, European and global mutual fund / ETF data — NAVs, holdings, metadata, and more.</p>
+        <p>All APIs provide JSON responses, no authentication required, and are free to access. The API explorer lets you try all endpoints directly from your browser.</p>
+      </div>
+    </section>
+    
+    <div class="container" style="padding:30px 0 80px">
+      <div class="search-shell" style="margin-bottom:24px">
+        <div class="field" style="max-width:440px">
+          <label for="source-search">Search sources</label>
+          <input id="source-search" type="search" placeholder="e.g., India, SEC, Europe, ETF" autocomplete="off">
+        </div>
+        <p class="search-hint" style="margin-top:8px">
+          Filter by region, coverage, or authentication. All sources listed are free to access (some have rate limits or fair-use tiers).
+        </div>
+      </div>
+      
+      <div id="loading-sources" class="text-sm muted" style="display:none;text-align:center;padding:16px">
+        Loading sources…
+      </div>
+      
+      <div id="sources-container"></div>
+      
+      <div id="empty-sources" class="text-sm muted" style="display:none;text-align:center;padding:24px">
+        No sources match your search.
+      </div>
+      
+      <div class="note" style="margin-top:24px;max-width:900px">
+        <strong>Attribution & licensing:</strong> Terms and licences vary by source. Some APIs are CC BY 4.0 (TickerInside), some are US government public domain (SEC filings), others have proprietary terms. Always verify each source's licence before commercial reuse.<br><br>
+        <strong>API access:</strong> <code>GET /api/v1/data-sources</code> (live) or <code>api/v1/data-sources.json</code> (static).<br>
+        <strong>Data sources directory:</strong> See the comprehensive table below for a country-wise breakdown of all available sources.
+      </div>
+    </div>
+    
+    <div class="container" style="padding:30px 0 80px">
+      <h2>API Directory by Region</h2>
+      <p>The following table shows all free mutual fund data APIs organized by country/region. Each entry includes the API name, coverage, authentication requirements, rate limits, base URL, documentation link, and notes.</p>
+      
+      <div class="table-wrap" style="margin: 24px 0; overflow-x: auto;">
+        <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 40px;">
+          <thead>
+            <tr>
+              <th>Region</th>
+              <th>API Name</th>
+              <th>Coverage</th>
+              <th>Auth</th>
+              <th>Rate Limit</th>
+              <th>Base URL</th>
+              <th>Docs</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- India -->
+            <tr>
+              <td>India</td>
+              <td>MFapi.in</td>
+              <td>Indian mutual fund search, latest NAV, and NAV history</td>
+              <td>None (per documentation)</td>
+              <td>Not documented</td>
+              <td>https://api.mfapi.in/mf</td>
+              <td>https://www.mfapi.in/docs</td>
+              <td>Largest dedicated Indian NAV API; updated up to 6x daily</td>
+            </tr>
+            <tr>
+              <td>India</td>
+              <td>mfdata.in</td>
+              <td>Indian NAV, portfolio holdings, sector analysis, ratios, returns (14,000+ schemes, 51 AMCs)</td>
+              <td>None required</td>
+              <td>Standard 30/min; analytics 10/min; bulk 10/min</td>
+              <td>https://api.mfdata.in/api/v1</td>
+              <td>https://mfdata.in/docs</td>
+              <td>Deep per-scheme enrichment: holdings, risk metrics, sector allocation</td>
+            </tr>
+            <tr>
+              <td>India</td>
+              <td>Charlie API (charliealpha.in)</td>
+              <td>Indian mutual funds & ETFs, NPS, SIF, GIFT City funds — latest/historical NAV, holdings</td>
+              <td>Unauthenticated</td>
+              <td>50 req / 10 s</td>
+              <td>https://api.charliealpha.in/v1</td>
+              <td>https://api.charliealpha.in/v1</td>
+              <td>GET-only endpoints; accepts AMFI scheme code or ISIN</td>
+            </tr>
+            <tr>
+              <td>India</td>
+              <td>mfnav.in</td>
+              <td>Indian NAV history from Jan 2006 (38,000+ schemes, 76 fund houses)</td>
+              <td>None</td>
+              <td>120 req/min per IP</td>
+              <td>https://mfnav.in/api</td>
+              <td>https://mfnav.in/api-docs</td>
+              <td>Free for any use including commercial; sync your own mirror daily</td>
+            </tr>
+            <tr>
+              <td>India</td>
+              <td>Tigzig Public APIs</td>
+              <td>AMFI MF NAV history (38,000+ schemes since April 2006); global macro indicators (~300)</td>
+              <td>None</td>
+              <td>Not documented</td>
+              <td>https://api.tigzig.com/v1</td>
+              <td>https://www.tigzig.com/apis</td>
+              <td>CSV / TSV / Parquet / SQLite bulk downloads</td>
+            </tr>
+            
+            <!-- USA -->
+            <tr>
+              <td>USA</td>
+              <td>TickerInside</td>
+              <td>US ETFs + large US mutual funds — portfolio holdings, overlap, holders</td>
+              <td>None — no key, no account, no quota</td>
+              <td>None for normal use</td>
+              <td>https://tickerinside.com/api/v1</td>
+              <td>https://tickerinside.com/api</td>
+              <td>CC BY 4.0. Derived from issuer holdings files and SEC Form N-PORT</td>
+            </tr>
+            <tr>
+              <td>USA</td>
+              <td>FundCensus</td>
+              <td>US registered fund (mutual/ETF/CEF) holdings — Form N-PORT positions</td>
+              <td>Key optional (authenticated raises daily allowance)</td>
+              <td>Unauthenticated: per-IP limits, lists stop at first 500 rows</td>
+              <td>https://fundcensus.com/api</td>
+              <td>https://fundcensus.com/openapi.json</td>
+              <td>Holdings are quarterly snapshots (~60 days lag)</td>
+            </tr>
+            <tr>
+              <td>USA</td>
+              <td>Market Data (api.marketdata.app)</td>
+              <td>US mutual fund candlestick / OHLC historical data</td>
+              <td>Free trial account (no card)</td>
+              <td>100 requests/day on free tier</td>
+              <td>https://api.marketdata.app/v1</td>
+              <td>https://www.marketdata.app/api/funds/how-to-use/</td>
+              <td>Free plan is for personal use</td>
+            </tr>
+            <tr>
+              <td>USA</td>
+              <td>iTick Mutual Funds API</td>
+              <td>Mutual funds, ETFs — end-of-day and historical data</td>
+              <td>Free plan (personal use only)</td>
+              <td>5 calls/minute free plan</td>
+              <td>https://itick.org/en/products/fund</td>
+              <td>https://itick.org/en/products/fund</td>
+              <td>Free tier restricted to personal use</td>
+            </tr>
+            <tr>
+              <td>USA</td>
+              <td>SEC EDGAR (via edgartools)</td>
+              <td>US mutual fund / ETF holdings from Form N-PORT filings — every position</td>
+              <td>None</td>
+              <td>None (public EDGAR)</td>
+              <td>https://www.sec.gov/edgar</td>
+              <td>https://edgartools.readthedocs.io</td>
+              <td>US government work — public domain; monthly N-PORT holdings with lag</td>
+            </tr>
+            
+            <!-- Europe -->
+            <tr>
+              <td>Europe</td>
+              <td>Leeway Fonds-API</td>
+              <td>40,000+ European funds NAV & reference data via ISIN; US funds with holdings, TER, returns</td>
+              <td>Free account token</td>
+              <td>50 requests/day (free account)</td>
+              <td>https://api.leeway.tech/api/v1</td>
+              <td>https://leeway.tech/data-api/fonds</td>
+              <td>Free tier is non-commercial use</td>
+            </tr>
+            <tr>
+              <td>Europe</td>
+              <td>ESMA Registers</td>
+              <td>EU investment fund / AIFMD registers — authorised funds & managers</td>
+              <td>None</td>
+              <td>Not documented</td>
+              <td>https://registers.esma.europa.eu/publication/solr/esma_registers_*</td>
+              <td>https://www.esma.europa.eu/publications-and-data/databases-and-registers</td>
+              <td>Reference registers rather than daily NAV feed</td>
+            </tr>
+            <tr>
+              <td>Europe</td>
+              <td>Info-financiere.gouv.fr API</td>
+              <td>French regulated financial information (stock market, funds)</td>
+              <td>Not documented</td>
+              <td>Not documented</td>
+              <td>https://info-financiere.gouv.fr/pages/api0/</td>
+              <td>https://info-financiere.gouv.fr/pages/api0/</td>
+              <td>French official centralised mechanism</td>
+            </tr>
+            
+            <!-- Global -->
+            <tr>
+              <td>Global</td>
+              <td>fundly</td>
+              <td>17 public sources, ISIN-based, no keys</td>
+              <td>None</td>
+              <td>Not documented</td>
+              <td>https://fundly.com</td>
+              <td>Not documented</td>
+              <td>17 public sources — ISIN-based, no keys required</td>
+            </tr>
+            <tr>
+              <td>Global</td>
+              <td>Tigzig Public APIs</td>
+              <td>AMFI MF NAV history (38,000+ schemes since April 2006); global macro indicators (~300)</td>
+              <td>None</td>
+              <td>Not documented</td>
+              <td>https://api.tigzig.com/v1</td>
+              <td>https://www.tigzig.com/apis</td>
+              <td>CSV / TSV / Parquet / SQLite bulk downloads</td>
+            </tr>
+            
+            <!-- Pakistan -->
+            <tr>
+              <td>Pakistan</td>
+              <td>Pakistan Mutual Funds (MUFAP-based)</td>
+              <td>~550 Pakistani mutual funds — daily NAV, dividends, indices</td>
+              <td>No signup / no API key (flat files + hosted REST API)</td>
+              <td>Not documented</td>
+              <td>https://github.com/saadsalmankhan/pakistan-mutual-funds-data</td>
+              <td>https://saadsalman.org/projects/pakistan-mutual-funds</td>
+              <td>Open dataset; not affiliated with MUFAP</td>
+            </tr>
+            
+            <!-- India (continued) -->
+            <tr>
+              <td>India</td>
+              <td>MFapi.in</td>
+              <td>Indian mutual fund search, latest NAV, and NAV history</td>
+              <td>None (per documentation)</td>
+              <td>Not documented</td>
+              <td>https://api.mfapi.in/mf</td>
+              <td>https://www.mfapi.in/docs</td>
+              <td>Largest dedicated Indian NAV API; updated up to 6x daily</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="note" style="margin-top:24px;max-width:900px">
+        <strong>Attribution & licensing:</strong> Terms and licences vary by source. Some APIs are CC BY 4.0 (TickerInside), some are US government public domain (SEC filings), others have proprietary terms. Always verify each source's licence before commercial reuse.<br><br>
+        <strong>API access:</strong> <code>GET /api/v1/data-sources</code> (live) or <code>api/v1/data-sources.json</code> (static).<br>
+        <strong>Data sources directory:</strong> See the <a href="data-sources.html">Data Sources</a> page for the browsable directory.<br>
+        <strong>API explorer:</strong> Try all endpoints directly from <a href="explorer.html">the API explorer</a> — it adapts automatically to static mode.
+      </div>
+    </div>
+    
+    <div class="container" style="padding:30px 0 80px">
+      <h2>API Access Methods</h2>
+      <p>The API explorer lets you try all endpoints directly from your browser. For each API endpoint, you can:</p>
+      
+      <ul style="margin-left:20px;">
+        <li><strong>Try live endpoints:</strong> Access the live API through the explorer (or directly through the API URL)</li>
+        <li><strong>Try static endpoints:</strong> Access static JSON files (e.g., <code>/api/v1/data-sources.json</code>)</li>
+        <li><strong>Copy API URLs:</strong> Copy endpoint URLs directly from the explorer</li>
+        <li><strong>Search and filter:</strong> Use the search box to find specific APIs or sources</li>
+        <li><strong>View documentation:</strong> Click on the "Docs" link in each API card for detailed information</li>
+      </ul>
+      
+      <p>All APIs provide JSON responses with the same consistent format. The explorer automatically detects static mode and adapts to local file access.</p>
+    </div>
+    
+    <div class="container" style="padding:30px 0 80px">
+      <h2>Getting Started</h2>
+      <p>To explore the APIs:</p>
+      <ol style="margin-left:20px;">
+        <li>Search for an API using the search box or browse the table above</li>
+        <li>Click on an API card to see its details and try the API explorer</li>
+        <li>Use the API explorer to make requests directly from your browser</li>
+        <li>Copy API URLs to use in your own applications</li>
+      </ol>
+      
+      <p>All APIs are free to access with no registration required. Some APIs have rate limits — be respectful and check the rate limit information for each API.</p>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="index.html">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 17l5-6 4 3 5-7 4 4"></path><path d="M3 21h18"></path>
+            </svg>
+          </span>
+          <span>MF Data API<small>Indian mutual fund NAV</small></span>
+        </a>
+        <p>Free and open JSON access to Indian mutual fund NAV data, built from the official AMFI India feed.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="docs.html">Documentation</a>
+        <a href="explorer.html">API explorer</a>
+        <a href="status.html">Status</a>
+        <a href="about.html">About</a>
+      </div>
+      <div class="footer-col">
+        <h4>API</h4>
+        <a href="docs.html#endpoint-list">All schemes</a>
+        <a href="docs.html#endpoint-history">NAV history</a>
+        <a href="docs.html#static-mode">Static JSON</a>
+        <a href="data-sources.html">Data sources directory</a>
+      </div>
+      <div class="footer-col">
+        <h4>Data</h4>
+        <a href="https://www.amfiindia.com/net-asset-value/nav-download" rel="noopener">AMFI India source</a>
+        <a href="docs.html#updates">Update schedule</a>
+        <a href="docs.html#license">License & attribution</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <span>© <span data-year>2026</span> MF Data API. Data sourced from AMFI India.</span>
+      <span><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · Not affiliated with AMFI or any AMC.</span>
+    </div>
+  </footer>
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

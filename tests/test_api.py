@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from app.config import AppSettings, WEB_DIR
+from app.config import WEB_DIR, AppSettings
 from app.main import create_app
 from pipeline.amfi import parse_history, parse_navall
 from pipeline.store import Store
@@ -171,3 +171,47 @@ def test_cors_and_rate_limit(tmp_path, fixture):
 
     # Health checks are exempt from the limiter.
     assert client.get("/api/v1/health").status_code == 200
+
+
+def test_movers_endpoint(client: TestClient):
+    response = client.get("/api/v1/movers/latest?limit=3&direction=gainers")
+    assert response.status_code == 200
+    data = response.json()
+    assert "data" in data
+    assert "count" in data
+    # Should have some movers (depends on sample data)
+    assert data["count"] >= 0
+
+
+def test_compare_endpoint(client: TestClient):
+    response = client.get("/api/v1/compare?codes=125497,100119")
+    assert response.status_code == 200
+    data = response.json()
+    assert "data" in data
+    assert len(data["data"]) >= 1
+
+
+def test_fund_house_stats_endpoint(client: TestClient):
+    response = client.get("/api/v1/fund-houses/SBI%20Mutual%20Fund/stats")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["fund_house"] == "SBI Mutual Fund"
+    assert "scheme_count" in data
+    assert "categories" in data
+
+
+def test_category_stats_endpoint(client: TestClient):
+    response = client.get("/api/v1/categories/stats")
+    assert response.status_code == 200
+    data = response.json()
+    assert "total_schemes" in data
+    assert "categories" in data
+    assert "latest_nav_date" in data
+
+
+def test_data_sources_endpoint(client: TestClient):
+    response = client.get("/api/v1/data-sources")
+    assert response.status_code == 200
+    data = response.json()
+    assert "data" in data
+    assert len(data["data"]) > 0
