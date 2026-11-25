@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-11-24T14:52:38+00:00",
-  "duration_seconds": 18.7,
+  "generated_at": "2026-11-25T01:05:50+00:00",
+  "duration_seconds": 16.9,
   "mode": "incremental",
   "latest_nav_date": "2026-11-24",
   "earliest_nav_date": "2012-02-17",
-  "scheme_count": 14629,
-  "nav_rows": 6127826,
+  "scheme_count": 14621,
+  "nav_rows": 4115763,
   "fund_house_count": 55,
   "navall_rows": 14240,
-  "history_rows": 44448,
+  "history_rows": 44592,
   "history_chunks": 1,
   "errors": [],
-  "database_bytes": 338096128,
+  "database_bytes": 228704256,
   "source": "AMFI India"
 }
