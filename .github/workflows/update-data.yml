@@ -233,9 +233,13 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # The downloaded snapshot makes data/status.json dirty. Save it first,
+          # then move the checkout to the latest main before restoring the file.
           cp data/status.json /tmp/status.json
           git fetch origin main
-          git rebase origin/main || { git rebase --abort; exit 1; }
+          git reset --hard FETCH_HEAD
+
           cp /tmp/status.json data/status.json
           git add -f data/status.json
           if git diff --cached --quiet; then
@@ -243,11 +247,19 @@ jobs:
             exit 0
           fi
           git commit -m "chore(data): update NAV snapshot $(date -u +%Y-%m-%d)"
+
           for attempt in 1 2 3; do
             if git push origin HEAD:main; then exit 0; fi
-            echo "Push failed (attempt ${attempt}); rebasing and retrying."
+            echo "Push failed (attempt ${attempt}); resetting and retrying."
             git fetch origin main
-            git rebase origin/main || { git rebase --abort; exit 1; }
+            git reset --hard FETCH_HEAD
+            cp /tmp/status.json data/status.json
+            git add -f data/status.json
+            if git diff --cached --quiet; then
+              echo "Remote already has this status snapshot."
+              exit 0
+            fi
+            git commit -m "chore(data): update NAV snapshot $(date -u +%Y-%m-%d)"
           done
           exit 1
 
