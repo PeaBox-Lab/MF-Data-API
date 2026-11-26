@@ -159,7 +159,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: calculated-db
-          path: data/mfdata.db
+          path: |
+            data/mfdata.db
+            data/status.json
           retention-days: 1
 
   build:
