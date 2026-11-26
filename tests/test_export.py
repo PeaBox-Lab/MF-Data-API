@@ -26,6 +26,13 @@ def test_static_export(tmp_path, fixture):
     schemes = json.loads((api / "mf.json").read_text(encoding="utf-8"))
     assert len(schemes) == 4
 
+    browse = json.loads((api / "mf" / "browse.json").read_text(encoding="utf-8"))
+    assert len(browse) == 4
+    sbi = next(row for row in browse if row["schemeCode"] == 125497)
+    assert sbi["fundHouse"] == "SBI Mutual Fund"
+    assert sbi["nav"] == "210.02130"
+    assert sbi["date"] == "20-11-2026"
+
     latest = json.loads((api / "mf" / "latest.json").read_text(encoding="utf-8"))
     assert latest[0]["date"] == "20-11-2026"
 

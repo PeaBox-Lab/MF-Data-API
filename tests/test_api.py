@@ -61,6 +61,18 @@ def test_search_and_list(client: TestClient):
     assert [row["schemeCode"] for row in response.json()] == [100121]
 
 
+def test_browse_schemes_endpoint(client: TestClient):
+    rows = client.get(
+        "/api/v1/mf/browse", params={"fund_house": "SBI Mutual Fund"}
+    ).json()
+    assert len(rows) == 1
+    assert rows[0]["schemeCode"] == 125497
+    assert rows[0]["fundHouse"] == "SBI Mutual Fund"
+    assert rows[0]["schemeCategory"] == "Equity Scheme - Small Cap Fund"
+    assert rows[0]["nav"] == "210.02130"
+    assert rows[0]["date"] == "20-11-2026"
+
+
 def test_latest_all_and_meta(client: TestClient):
     response = client.get("/api/v1/mf/latest")
     assert response.status_code == 200

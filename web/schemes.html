@@ -77,13 +77,7 @@
         </p>
       </div>
 
-      <div 
-
-<div id="search-results" class="search-results">
-  <div class="search-empty" style="display:none;">No schemes matched that search.</div>
-</div>
-
-class="table-wrap" style="margin-bottom:16px">
+      <div class="table-wrap" style="margin-bottom:16px">
         <table id="schemes-table">
           <thead>
             <tr>
@@ -256,7 +250,7 @@ class="table-wrap" style="margin-bottom:16px">
   }
 
   function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, s => ({ "&": "&", "<": "<", ">": ">", '"': """, "'": "'" }[s]));
+    return String(str).replace(/[&<>"']/g, s => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s]));
   }
 
   async function loadSchemes(page = 0) {
@@ -268,7 +262,7 @@ class="table-wrap" style="margin-bottom:16px">
 
     try {
       const params = buildQueryParams(page);
-      const listUrl = STATIC ? apiUrl("/mf.json") : apiUrl("/mf", params);
+      const listUrl = STATIC ? apiUrl("/mf/browse.json") : apiUrl("/mf/browse", params);
       const { ok, data } = await fetchJson(listUrl);
       if (!ok) throw new Error("Failed to fetch schemes");
 
@@ -350,16 +344,42 @@ class="table-wrap" style="margin-bottom:16px">
     debounceTimer = setTimeout(() => loadSchemes(0), 300);
   }
 
-  // Initialize search/filter variables
-  const searchInput = $("#scheme-search");
-  const fundHouseSelect = $("#fund-house-filter");
-  const categorySelect = $("#category-filter");
+  function applyInitialFilters() {
+    const params = new URLSearchParams(location.search);
+    const q = params.get("q");
+    if (q) searchInput.value = q;
+
+    const house = params.get("fund_house") || params.get("name");
+    if (house) {
+      if (!Array.from(fundHouseSelect.options).some(o => o.value === house)) {
+        const opt = document.createElement("option");
+        opt.value = house;
+        opt.textContent = house;
+        fundHouseSelect.appendChild(opt);
+      }
+      fundHouseSelect.value = house;
+    }
+
+    const category = params.get("category");
+    if (category) {
+      if (!Array.from(categorySelect.options).some(o => o.value === category)) {
+        const opt = document.createElement("option");
+        opt.value = category;
+        opt.textContent = category;
+        categorySelect.appendChild(opt);
+      }
+      categorySelect.value = category;
+    }
+  }
 
   searchInput.addEventListener("input", debouncedLoad);
   fundHouseSelect.addEventListener("change", () => loadSchemes(0));
   categorySelect.addEventListener("change", () => loadSchemes(0));
 
-  loadFilters().then(() => loadSchemes(0));
+  loadFilters().then(() => {
+    applyInitialFilters();
+    loadSchemes(0);
+  });
 })();
   </script>
 </body>

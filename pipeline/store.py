@@ -276,6 +276,63 @@ class Store:
             rows = conn.execute(sql, params).fetchall()
         return [self._summary(row) for row in rows]
 
+    def browse_schemes(
+        self,
+        *,
+        limit: int | None = None,
+        offset: int = 0,
+        q: str | None = None,
+        fund_house: str | None = None,
+        category: str | None = None,
+    ) -> list[dict]:
+        """List schemes with metadata and latest NAV for the browse UI."""
+
+        clauses: list[str] = []
+        params: list = []
+
+        if q:
+            clauses.append(
+                "(scheme_name LIKE ? ESCAPE '\\' OR CAST(scheme_code AS TEXT) = ?)"
+            )
+            params.extend([_like_pattern(q), q.strip()])
+        if fund_house:
+            clauses.append("fund_house = ? COLLATE NOCASE")
+            params.append(fund_house)
+        if category:
+            clauses.append("scheme_category = ? COLLATE NOCASE")
+            params.append(category)
+
+        where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        order = "scheme_name COLLATE NOCASE" if q else "scheme_code"
+        sql = (
+            "SELECT scheme_code, scheme_name, fund_house, scheme_category, "
+            f"latest_date, latest_nav FROM schemes {where} ORDER BY {order}"
+        )
+        if limit is not None:
+            sql += " LIMIT ? OFFSET ?"
+            params.extend([limit, offset])
+        elif offset:
+            sql += " LIMIT -1 OFFSET ?"
+            params.append(offset)
+
+        with self.connect(readonly=True) as conn:
+            rows = conn.execute(sql, params).fetchall()
+        return [
+            {
+                "schemeCode": row["scheme_code"],
+                "schemeName": row["scheme_name"],
+                "fundHouse": row["fund_house"] or "",
+                "schemeCategory": row["scheme_category"] or "",
+                "nav": (
+                    f"{row['latest_nav']:.5f}"
+                    if row["latest_nav"] is not None
+                    else None
+                ),
+                "date": to_api_date(row["latest_date"]) if row["latest_date"] else None,
+            }
+            for row in rows
+        ]
+
     def search_schemes(self, q: str, *, limit: int | None = None, offset: int = 0) -> list[dict]:
         pattern = _like_pattern(q)
         prefix = _like_pattern(q).lstrip("%")  # "abc%" style ranking

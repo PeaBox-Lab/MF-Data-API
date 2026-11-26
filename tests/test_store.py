@@ -65,6 +65,19 @@ def test_list_and_search(store: Store):
     assert [row["schemeCode"] for row in by_category] == [100121]
 
 
+def test_browse_schemes(store: Store):
+    rows = store.browse_schemes()
+    sbi = next(row for row in rows if row["schemeCode"] == 125497)
+    assert sbi["fundHouse"] == "SBI Mutual Fund"
+    assert sbi["schemeCategory"] == "Equity Scheme - Small Cap Fund"
+    assert sbi["nav"] == "210.02130"
+    assert sbi["date"] == "20-11-2026"
+
+    axis = store.browse_schemes(fund_house="Axis Mutual Fund", limit=1)
+    assert len(axis) == 1
+    assert axis[0]["fundHouse"] == "Axis Mutual Fund"
+
+
 def test_latest_and_by_date(store: Store):
     latest = store.latest_all()
     assert len(latest) == 4

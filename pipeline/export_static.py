@@ -246,6 +246,10 @@ def export_static(
     _write_json(api_dir / "mf.json", schemes)
     log_fn(f"  mf.json: {len(schemes):,} schemes")
 
+    browse = store.browse_schemes()
+    _write_json(api_dir / "mf" / "browse.json", browse)
+    log_fn(f"  mf/browse.json: {len(browse):,} schemes")
+
     latest = store.latest_all()
     latest_payload = [
         {

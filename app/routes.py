@@ -32,6 +32,7 @@ from .schemas import (
     MoverItem,
     MoverResponse,
     NavOnDate,
+    SchemeBrowse,
     SchemeHistory,
     SchemeMeta,
     SchemeSummary,
@@ -153,6 +154,30 @@ def list_schemes(
 ):
     _ensure_data(store)
     return store.list_schemes(
+        limit=limit, offset=offset, q=q, fund_house=fund_house, category=category
+    )
+
+
+@router.get(
+    "/mf/browse",
+    response_model=list[SchemeBrowse],
+    summary="Browse schemes with metadata and latest NAV",
+    description=(
+        "Returns the scheme master list enriched with fund house, category and the "
+        "latest published NAV. Supports the same filters and pagination as `/mf`."
+    ),
+    tags=["Schemes"],
+)
+def browse_schemes(
+    store: StoreDep,
+    limit: Annotated[int | None, Query(ge=1, le=50000, description="Page size")] = None,
+    offset: Annotated[int, Query(ge=0, description="Rows to skip")] = 0,
+    q: Annotated[str | None, Query(min_length=1, max_length=100, description="Name filter")] = None,
+    fund_house: Annotated[str | None, Query(description="Exact fund house name")] = None,
+    category: Annotated[str | None, Query(description="Exact scheme category")] = None,
+):
+    _ensure_data(store)
+    return store.browse_schemes(
         limit=limit, offset=offset, q=q, fund_house=fund_house, category=category
     )
 

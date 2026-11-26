@@ -10,6 +10,15 @@ class SchemeSummary(BaseModel):
     schemeName: str = Field(..., examples=["SBI Small Cap Fund - Direct Plan - Growth"])
 
 
+class SchemeBrowse(SchemeSummary):
+    fundHouse: str = Field("", examples=["SBI Mutual Fund"])
+    schemeCategory: str = Field(
+        "", examples=["Equity Scheme - Small Cap Fund"]
+    )
+    nav: str | None = Field(None, examples=["210.02130"])
+    date: str | None = Field(None, examples=["20-11-2026"])
+
+
 class NavPoint(BaseModel):
     date: str = Field(..., examples=["20-11-2026"], description="NAV date (DD-MM-YYYY)")
     nav: str = Field(..., examples=["210.02130"], description="NAV as a fixed-point string")
