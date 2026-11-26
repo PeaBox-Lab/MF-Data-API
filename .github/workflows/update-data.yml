@@ -173,6 +173,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -193,9 +195,11 @@ jobs:
         run: |
           set -euo pipefail
           python -m pipeline export --out public
+          python scripts/build_sitemap.py --out web/sitemap.xml
           python scripts/build_site.py \
             --out public \
-            --repo-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+            --repo-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
+            --base-url "https://mfdata.peabox.in"
 
       - name: Upload status snapshot
         uses: actions/upload-artifact@v4
