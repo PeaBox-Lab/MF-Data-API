@@ -1,101 +1,61 @@
 name: KPI Calculation
 
+# KPI and analytics tables are recalculated inside update-data.yml. This
+# workflow only triggers that pipeline so there is a single, chunked data job
+# and no duplicate sync/export that could race or time out.
+
 on:
   schedule:
-    # Run daily at 09:00 UTC (05:30 IST) — adjust as needed
+    # 09:00 UTC (14:30 IST). update-data.yml also runs at 04:15 and 16:45 UTC.
     - cron: "0 9 * * *"
   workflow_dispatch:
     inputs:
       force_full:
-        description: "Force a full backfill of KPI history"
+        description: "Backfill history in bounded windows"
         required: false
         default: false
+        type: boolean
       bootstrap_days:
         description: "History depth for a fresh KPI dataset (days)"
         required: false
         default: "1095"
+      window_days:
+        description: "Days per backfill window (1-90)"
+        required: false
+        default: "90"
+      max_windows:
+        description: "Maximum pending backfill windows processed per run"
+        required: false
+        default: "4"
 
 permissions:
-  contents: write
-  id-token: write
+  actions: write
+  contents: read
 
 concurrency:
-  group: kpi-calculation
+  group: mf-data-pipeline-trigger
   cancel-in-progress: false
 
 jobs:
-  calculate-kpis:
-    name: Calculate KPIs
+  trigger-pipeline:
+    name: Trigger chunked data pipeline
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 10
+    env:
+      BOOTSTRAP_DAYS: ${{ github.event.inputs.bootstrap_days || '1095' }}
+      FORCE_FULL: ${{ github.event.inputs.force_full == 'true' && 'true' || 'false' }}
+      WINDOW_DAYS: ${{ github.event.inputs.window_days || '90' }}
+      MAX_WINDOWS: ${{ github.event.inputs.max_windows || '4' }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-
-      - name: Restore NAV database
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            data/mfdata.db
-            data/mfdata.db-wal
-            data/mfdata.db-shm
-          key: mfdata-db-${{ github.run_id }}
-          restore-keys: |
-            mfdata-db-
-
-      - name: Install dependencies
-        run: pip install -r requirements-dev.txt
-
-      - name: Sync AMFI NAV data (fresh input)
-        env:
-          BOOTSTRAP_DAYS: ${{ github.event.inputs.bootstrap_days || '1095' }}
-          FORCE_FULL: ${{ github.event.inputs.force_full == 'true' && 'true' || 'false' }}
+      - name: Dispatch update-data workflow
         run: |
           set -euo pipefail
-          EXTRA=""
-          if [ "${FORCE_FULL}" = "true" ]; then EXTRA="--full"; fi
-          python -m pipeline sync --bootstrap-days "${BOOTSTRAP_DAYS}" ${EXTRA}
-
-      - name: Recalculate KPI tables
-        run: |
-          set -euo pipefail
-          python scripts/calc_kpis.py
-          python scripts/calc_analytics.py
-
-      - name: Export static API and documentation site
-        run: |
-          set -euo pipefail
-          python -m pipeline export --out public
-          python scripts/build_site.py \
-            --out public \
-            --repo-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
-
-      - name: Save NAV database snapshot
-        if: always() && hashFiles('data/mfdata.db') != ''
-        continue-on-error: true
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            data/mfdata.db
-            data/mfdata.db-wal
-            data/mfdata.db-shm
-          key: mfdata-db-${{ github.run_id }}
-
-      - name: Commit KPI updates
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "No KPI changes to commit."
-          else
-            git commit -m "chore(kpi): update KPI tables $(date -u +%Y-%m-%d)"
-            git push
-          fi
+          gh workflow run update-data.yml \
+            --repo "${GITHUB_REPOSITORY}" \
+            -f bootstrap_days="${BOOTSTRAP_DAYS}" \
+            -f force_full="${FORCE_FULL}" \
+            -f window_days="${WINDOW_DAYS}" \
+            -f max_windows="${MAX_WINDOWS}"
+          echo "Dispatched update-data.yml; KPI and analytics tables will be recalculated there."

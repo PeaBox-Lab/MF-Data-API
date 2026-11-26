@@ -14,7 +14,20 @@ on:
         required: false
         default: "1095"
       force_full:
-        description: "Force a full history backfill"
+        description: "Backfill history in bounded windows instead of an incremental sync"
+        required: false
+        type: boolean
+        default: false
+      window_days:
+        description: "Days per backfill window (1-90)"
+        required: false
+        default: "90"
+      max_windows:
+        description: "Maximum pending backfill windows processed per run"
+        required: false
+        default: "4"
+      reset_checkpoint:
+        description: "Discard the backfill checkpoint and start a fresh window"
         required: false
         type: boolean
         default: false
@@ -24,19 +37,23 @@ permissions:
   pages: write
   id-token: write
 
+# Shared with kpi.yml so only one data pipeline runs at a time.
 concurrency:
-  group: update-nav-data
+  group: mf-data-pipeline
   cancel-in-progress: false
 
 jobs:
-  update:
-    name: Fetch AMFI data and build the site
+  sync:
+    name: Sync AMFI data (bounded window)
     if: github.event_name != 'push' || github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 45
     env:
       BOOTSTRAP_DAYS: ${{ inputs.bootstrap_days || '1095' }}
       FORCE_FULL: ${{ inputs.force_full || 'false' }}
+      WINDOW_DAYS: ${{ inputs.window_days || '90' }}
+      MAX_WINDOWS: ${{ inputs.max_windows || '4' }}
+      RESET_CHECKPOINT: ${{ inputs.reset_checkpoint || 'false' }}
 
     steps:
       - name: Check out repository
@@ -59,6 +76,7 @@ jobs:
             data/mfdata.db-shm
           key: mfdata-db-${{ github.run_id }}
           restore-keys: |
+            mfdata-db-sync-
             mfdata-db-
 
       - name: Install dependencies
@@ -67,23 +85,19 @@ jobs:
       - name: Sync AMFI NAV data
         run: |
           set -euo pipefail
-          EXTRA=""
-          if [ "${FORCE_FULL}" = "true" ]; then EXTRA="--full"; fi
-          python -m pipeline sync --bootstrap-days "${BOOTSTRAP_DAYS}" ${EXTRA}
+          if [ "${FORCE_FULL}" = "true" ]; then
+            EXTRA=""
+            if [ "${RESET_CHECKPOINT}" = "true" ]; then EXTRA="${EXTRA} --reset-checkpoint"; fi
+            python -m pipeline sync --resume \
+              --bootstrap-days "${BOOTSTRAP_DAYS}" \
+              --chunk-days "${WINDOW_DAYS}" \
+              --max-chunks "${MAX_WINDOWS}" ${EXTRA}
+          else
+            python -m pipeline sync --bootstrap-days "${BOOTSTRAP_DAYS}"
+          fi
 
-      - name: Recalculate KPI and analytics tables
-        run: |
-          set -euo pipefail
-          python scripts/calc_kpis.py
-          python scripts/calc_analytics.py
-
-      - name: Export static API and documentation site
-        run: |
-          set -euo pipefail
-          python -m pipeline export --out public
-          python scripts/build_site.py \
-            --out public \
-            --repo-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+      - name: Checkpoint SQLite WAL
+        run: python -c "import sqlite3; c=sqlite3.connect('data/mfdata.db'); c.execute('PRAGMA wal_checkpoint(TRUNCATE)'); c.close()"
 
       - name: Save NAV database
         if: always() && hashFiles('data/mfdata.db') != ''
@@ -94,33 +108,155 @@ jobs:
             data/mfdata.db
             data/mfdata.db-wal
             data/mfdata.db-shm
-          key: mfdata-db-${{ github.run_id }}
+          key: mfdata-db-sync-${{ github.run_id }}
 
-      - name: Commit dataset status
+      - name: Upload synced database
+        if: always() && hashFiles('data/mfdata.db') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: synced-db
+          path: |
+            data/mfdata.db
+            data/status.json
+          if-no-files-found: ignore
+          retention-days: 1
+
+  calculate:
+    name: Recalculate KPI and analytics tables
+    needs: sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download synced database
+        uses: actions/download-artifact@v4
+        with:
+          name: synced-db
+          path: data
+
+      - name: Calculate KPIs and analytics
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f data/status.json
-          if git diff --cached --quiet; then
-            echo "No status changes to commit."
-          else
-            git commit -m "chore(data): update NAV snapshot $(date -u +%Y-%m-%d)"
-            git push
-          fi
+          python scripts/calc_kpis.py
+          python scripts/calc_analytics.py
+
+      - name: Checkpoint SQLite WAL
+        run: python -c "import sqlite3; c=sqlite3.connect('data/mfdata.db'); c.execute('PRAGMA wal_checkpoint(TRUNCATE)'); c.close()"
+
+      - name: Upload calculated database
+        uses: actions/upload-artifact@v4
+        with:
+          name: calculated-db
+          path: data/mfdata.db
+          retention-days: 1
+
+  build:
+    name: Export static API and site
+    needs: calculate
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download calculated database
+        uses: actions/download-artifact@v4
+        with:
+          name: calculated-db
+          path: data
+
+      - name: Export static API and documentation site
+        run: |
+          set -euo pipefail
+          python -m pipeline export --out public
+          python scripts/build_site.py \
+            --out public \
+            --repo-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+
+      - name: Upload status snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: status-snapshot
+          path: data/status.json
+          if-no-files-found: ignore
+          retention-days: 1
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: public
 
+  publish:
+    name: Commit dataset status
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download status snapshot
+        uses: actions/download-artifact@v4
+        with:
+          name: status-snapshot
+          path: data
+
+      - name: Commit and push status
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp data/status.json /tmp/status.json
+          git fetch origin main
+          git rebase origin/main || { git rebase --abort; exit 1; }
+          cp /tmp/status.json data/status.json
+          git add -f data/status.json
+          if git diff --cached --quiet; then
+            echo "No status changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(data): update NAV snapshot $(date -u +%Y-%m-%d)"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then exit 0; fi
+            echo "Push failed (attempt ${attempt}); rebasing and retrying."
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort; exit 1; }
+          done
+          exit 1
+
   deploy:
     name: Deploy GitHub Pages
-    needs: update
+    needs: publish
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

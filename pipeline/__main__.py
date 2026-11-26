@@ -17,12 +17,13 @@ import logging
 import os
 import sys
 from dataclasses import replace
+from datetime import date
 from pathlib import Path
 
 from .config import Settings, load_settings
 from .export_static import export_static
 from .store import Store
-from .sync import sync
+from .sync import checkpoint_chunk_days, pending_chunks, sync
 
 
 def _settings(args: argparse.Namespace) -> Settings:
@@ -38,6 +39,43 @@ def _print_json(payload) -> None:
 
 def cmd_sync(args: argparse.Namespace) -> int:
     settings = _settings(args)
+
+    if args.resume:
+        pending = pending_chunks(
+            settings,
+            bootstrap_days=args.bootstrap_days,
+            chunk_days=args.chunk_days,
+            reset=args.reset_checkpoint,
+        )
+        selected = pending[: max(1, args.max_chunks)]
+        if not selected:
+            _print_json(
+                {
+                    "mode": "backfill-complete",
+                    "pending_chunks": 0,
+                    "message": "All anchored history chunks are already synced.",
+                }
+            )
+            return 0
+        print(f"Backfill: {len(selected)} of {len(pending)} pending chunk(s) this run.")
+        summary = sync(
+            settings,
+            start_date=selected[0][0],
+            end_date=selected[-1][1],
+            save_raw=not args.no_raw,
+            strict=args.strict,
+            skip_navall=True,
+            finalise=not args.no_finalise,
+            chunk_days=checkpoint_chunk_days(settings),
+            log_fn=print,
+        )
+        summary["pending_chunks_before"] = len(pending)
+        summary["pending_chunks_after"] = max(0, len(pending) - len(selected))
+        _print_json(summary)
+        return 0
+
+    start = date.fromisoformat(args.start_date) if args.start_date else None
+    end = date.fromisoformat(args.end_date) if args.end_date else None
     summary = sync(
         settings,
         bootstrap_days=args.bootstrap_days,
@@ -45,6 +83,11 @@ def cmd_sync(args: argparse.Namespace) -> int:
         full=args.full,
         save_raw=not args.no_raw,
         strict=args.strict,
+        start_date=start,
+        end_date=end,
+        skip_navall=args.skip_navall,
+        finalise=not args.no_finalise,
+        chunk_days=args.chunk_days,
         log_fn=print,
     )
     _print_json(summary)
@@ -133,6 +176,40 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sync_parser.add_argument(
         "--strict", action="store_true", help="Fail on the first history chunk error"
+    )
+    sync_parser.add_argument(
+        "--start-date", help="First date (YYYY-MM-DD) of a bounded sync window"
+    )
+    sync_parser.add_argument(
+        "--end-date", help="Last date (YYYY-MM-DD) of a bounded sync window"
+    )
+    sync_parser.add_argument(
+        "--chunk-days",
+        type=int,
+        default=None,
+        help="Days per history request in a bounded window (1-90, default: pipeline config)",
+    )
+    sync_parser.add_argument(
+        "--skip-navall", action="store_true", help="Skip the latest-NAV download"
+    )
+    sync_parser.add_argument(
+        "--no-finalise", action="store_true", help="Skip status refresh (window mode)"
+    )
+    sync_parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Sync a bounded batch of pending backfill chunks and exit",
+    )
+    sync_parser.add_argument(
+        "--max-chunks",
+        type=int,
+        default=1,
+        help="Maximum pending chunks per --resume run (default: 1)",
+    )
+    sync_parser.add_argument(
+        "--reset-checkpoint",
+        action="store_true",
+        help="Discard the backfill checkpoint and anchor a fresh window",
     )
     sync_parser.set_defaults(func=cmd_sync)
 
