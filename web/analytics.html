@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Analytics — MF Data API</title>
-  <meta name="description" content="Mutual fund analytics: KPIs at scheme, fund house, category and fund type levels.">
+  <meta name="description" content="Daily mutual fund NAV movement analytics by theme, category, fund type and fund house.">
   <meta name="theme-color" content="#060b16">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/style.css">
@@ -25,17 +25,17 @@
 
       <nav class="nav-links" id="site-nav" aria-label="Main navigation">
         <a href="index.html">Features</a>
-        
+
         <div class="dropdown">
           <a href="docs.html">API reference ▼</a>
           <div class="dropdown-content">
             <a href="docs.html">API reference</a>
             <a href="docs.html#static-mode">Static JSON</a>
             <a href="docs.html#updates">Update schedule</a>
-            <a href="docs.html#license">License & attribution</a>
+            <a href="docs.html#license">License &amp; attribution</a>
           </div>
         </div>
-        
+
         <div class="dropdown">
           <a href="#">Funds ▼</a>
           <div class="dropdown-content">
@@ -44,7 +44,7 @@
             <a href="categories.html">Categories</a>
           </div>
         </div>
-        
+
         <a href="explorer.html">Explorer</a>
         <a href="status.html">Status</a>
         <a href="analytics.html">Analytics</a>
@@ -60,38 +60,102 @@
   </header>
 
   <main id="main">
-    <section class="section">
+    <section class="section section-tight">
       <div class="container">
         <div class="section-head">
           <span class="eyebrow">Analytics</span>
-          <h2>Mutual fund KPIs</h2>
-          <p>Key performance indicators computed across schemes, fund houses, categories and fund types.</p>
+          <h2>Daily NAV movement</h2>
+          <p>Average, minimum and maximum daily NAV change across themes, categories, fund types and AMCs.</p>
         </div>
 
+        <div id="analytics-notice" class="analytics-notice" hidden></div>
+
+        <div class="analytics-controls">
+          <label class="field">
+            <span>Group by</span>
+            <select id="movement-level">
+              <option value="theme">Theme / sector (from scheme name)</option>
+              <option value="category">Category</option>
+              <option value="type">Fund type</option>
+              <option value="fund_house">Fund house</option>
+              <option value="all">Whole market</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Group</span>
+            <select id="movement-group"><option value="">Latest-day ranking</option></select>
+          </label>
+          <label class="field">
+            <span>From</span>
+            <input type="date" id="movement-start">
+          </label>
+          <label class="field">
+            <span>To</span>
+            <input type="date" id="movement-end">
+          </label>
+          <button class="btn btn-primary" id="movement-refresh" type="button">Refresh</button>
+        </div>
+
+        <div class="metric-grid" aria-live="polite">
+          <div class="metric"><span class="metric-label">Average daily change</span><strong id="metric-avg">—</strong><small id="metric-avg-date">Latest available date</small></div>
+          <div class="metric"><span class="metric-label">Minimum</span><strong id="metric-min">—</strong><small>Weakest scheme</small></div>
+          <div class="metric"><span class="metric-label">Maximum</span><strong id="metric-max">—</strong><small>Strongest scheme</small></div>
+          <div class="metric"><span class="metric-label">Median</span><strong id="metric-median">—</strong><small>Middle scheme</small></div>
+          <div class="metric"><span class="metric-label">Dispersion (σ)</span><strong id="metric-stddev">—</strong><small>Spread across schemes</small></div>
+          <div class="metric"><span class="metric-label">Schemes</span><strong id="metric-count">—</strong><small id="metric-breadth">Breadth —</small></div>
+        </div>
+
+        <div class="analytics-two-col">
+          <div class="card">
+            <h3>Average daily movement</h3>
+            <p class="muted" id="chart-caption">Select a group to see its movement trend.</p>
+            <svg id="movement-sparkline" class="sparkline" viewBox="0 0 640 180" preserveAspectRatio="none" role="img" aria-label="Average daily change over time"></svg>
+          </div>
+          <div class="card">
+            <h3>How this is computed</h3>
+            <ul class="analytics-notes">
+              <li>Change = NAV on the day ÷ previous published NAV − 1. NAV is an end-of-day value, not a traded price.</li>
+              <li>Direct/Regular and Growth/IDCW plans are collapsed to one canonical plan before aggregating.</li>
+              <li>AMFI has no sector field. Themes are inferred from scheme names in Sectoral/Thematic categories.</li>
+              <li>Gaps longer than four calendar days are excluded so holidays are not reported as daily moves.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3 class="analytics-subhead">Daily movement</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Avg</th><th>Median</th><th>Min</th><th>Max</th><th>σ</th><th>Up / Down</th><th>Schemes</th><th>Index</th></tr>
+            </thead>
+            <tbody id="movement-rows"><tr><td colspan="9" class="muted">Loading…</td></tr></tbody>
+          </table>
+        </div>
+
+        <h3 class="analytics-subhead">Latest available ranking (groups with 3+ schemes)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Group</th><th>Avg</th><th>Min</th><th>Max</th><th>Schemes</th><th>Up / Down</th><th>Best scheme</th></tr>
+            </thead>
+            <tbody id="ranking-rows"><tr><td colspan="7" class="muted">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tight">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Coverage</span>
+          <h2>KPI dataset</h2>
+          <p id="analytics-coverage">Loading coverage…</p>
+        </div>
         <div class="analytics-grid">
-          <div class="card">
-            <h3>Scheme-level KPIs</h3>
-            <p>Key metrics for individual mutual fund schemes.</p>
-            <div id="scheme-kpi-status">Loading…</div>
-          </div>
-
-          <div class="card">
-            <h3>Fund House KPIs</h3>
-            <p>Aggregated KPIs for fund houses (AMCs).</p>
-            <div id="fh-kpi-status">Loading…</div>
-          </div>
-
-          <div class="card">
-            <h3>Category KPIs</h3>
-            <p>KPIs aggregated by investment category.</p>
-            <div id="cat-kpi-status">Loading…</div>
-          </div>
-
-          <div class="card">
-            <h3>Fund Type KPIs</h3>
-            <p>KPIs aggregated by fund type (equity, debt, hybrid).</p>
-            <div id="type-kpi-status">Loading…</div>
-          </div>
+          <div class="card"><h3>Schemes</h3><p>Daily returns computed per scheme.</p><strong class="coverage-number" id="coverage-schemes">—</strong><p class="muted"><a href="docs.html#endpoint-list">Scheme API →</a></p></div>
+          <div class="card"><h3>Fund families</h3><p>Plan variants collapsed into one fund.</p><strong class="coverage-number" id="coverage-families">—</strong><p class="muted"><a href="fund-houses.html">Fund houses →</a></p></div>
+          <div class="card"><h3>Categories</h3><p>Normalised AMFI categories.</p><strong class="coverage-number" id="coverage-categories">—</strong><p class="muted"><a href="categories.html">Categories →</a></p></div>
+          <div class="card"><h3>Trading days</h3><p>Dates with published NAV changes.</p><strong class="coverage-number" id="coverage-days">—</strong><p class="muted"><a href="status.html">Data status →</a></p></div>
         </div>
       </div>
     </section>
@@ -114,6 +178,7 @@
         <h4>Product</h4>
         <a href="explorer.html">API explorer</a>
         <a href="status.html">Status</a>
+        <a href="analytics.html">Analytics</a>
       </div>
       <div class="footer-col">
         <h4>API</h4>
@@ -125,6 +190,7 @@
         <h4>Data</h4>
         <a href="https://www.amfiindia.com/net-asset-value/nav-download" rel="noopener">AMFI India source</a>
         <a href="docs.html#updates">Update schedule</a>
+        <a href="analytics.html">Analytics</a>
         <a href="docs.html#license">License &amp; attribution</a>
       </div>
     </div>

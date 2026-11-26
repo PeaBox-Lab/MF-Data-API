@@ -697,6 +697,313 @@
     }
   }
 
+  /* --------------------------------------------------------------- analytics */
+  function isoDate(value) {
+    const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(String(value || ""));
+    return match ? `${match[3]}-${match[2]}-${match[1]}` : String(value || "");
+  }
+
+  async function analyticsFetch(livePath, staticPath, params = {}) {
+    // Explicit static deployments (and file:// previews) have no live API, so
+    // go straight to the exported JSON instead of probing a missing endpoint.
+    // Otherwise try the live endpoint first, falling back to static JSON.
+    const staticOnly = cfg.mode === "static" || location.protocol === "file:";
+    const attempts = staticOnly
+      ? [apiUrl(staticPath)]
+      : [apiUrl(livePath, params), apiUrl(staticPath)];
+    let error = null;
+    for (const url of attempts) {
+      try {
+        const { response, data } = await fetchJson(url);
+        if (response.ok && data && typeof data === "object") {
+          return { data, source: url.pathname.endsWith(".json") ? "static" : "live" };
+        }
+        error = new Error(`HTTP ${response.status}`);
+      } catch (caught) {
+        error = caught;
+      }
+    }
+    throw error || new Error("Analytics unavailable");
+  }
+
+  function pct(value) {
+    return typeof value === "number"
+      ? `${value >= 0 ? "+" : ""}${value.toFixed(4)}%`
+      : "—";
+  }
+
+  function setText(selector, value) {
+    const element = $(selector);
+    if (element) element.textContent = value;
+  }
+
+  function cell(value, cls) {
+    const td = document.createElement("td");
+    td.textContent = value === undefined || value === null ? "—" : String(value);
+    if (cls) td.className = cls;
+    return td;
+  }
+
+  function fillTable(selector, items, columns, colspan, emptyText) {
+    const tbody = $(selector);
+    if (!tbody) return;
+    tbody.replaceChildren();
+    if (!items.length) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = colspan;
+      td.className = "muted";
+      td.textContent = emptyText;
+      tr.append(td);
+      tbody.append(tr);
+      return;
+    }
+    items.forEach((item) => {
+      const tr = document.createElement("tr");
+      columns.forEach((make) => tr.append(make(item)));
+      tbody.append(tr);
+    });
+  }
+
+  function drawSparkline(rows) {
+    const svg = $("#movement-sparkline");
+    if (!svg) return;
+    svg.replaceChildren();
+    const values = rows.map((row) => row.avg_change).filter((v) => typeof v === "number");
+    if (values.length < 2) {
+      setText("#chart-caption", "Not enough dates yet to draw a trend.");
+      return;
+    }
+    const NS = "http://www.w3.org/2000/svg";
+    const low = Math.min(0, ...values);
+    const high = Math.max(0, ...values);
+    const span = high - low || 1;
+    const x = (i) => 10 + (i * 620) / (values.length - 1);
+    const y = (v) => 12 + ((high - v) / span) * 156;
+
+    const zero = document.createElementNS(NS, "line");
+    zero.setAttribute("x1", "10");
+    zero.setAttribute("x2", "630");
+    zero.setAttribute("y1", String(y(0)));
+    zero.setAttribute("y2", String(y(0)));
+    zero.setAttribute("stroke", "var(--border)");
+    zero.setAttribute("stroke-dasharray", "4 5");
+    svg.append(zero);
+
+    const path = document.createElementNS(NS, "path");
+    path.setAttribute(
+      "d",
+      values
+        .map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`)
+        .join(" ")
+    );
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", values[values.length - 1] >= 0 ? "var(--accent)" : "var(--danger)");
+    path.setAttribute("stroke-width", "2.5");
+    path.setAttribute("stroke-linejoin", "round");
+    svg.append(path);
+    setText(
+      "#chart-caption",
+      `${values.length} published NAV dates · ${rows[0].date} to ${rows[rows.length - 1].date}`
+    );
+  }
+
+  function renderMovement(rows) {
+    const latest = rows[rows.length - 1];
+    setText("#metric-avg", pct(latest && latest.avg_change));
+    setText("#metric-min", pct(latest && latest.min_change));
+    setText("#metric-max", pct(latest && latest.max_change));
+    setText("#metric-median", pct(latest && latest.median_change));
+    setText("#metric-stddev", pct(latest && latest.stddev_change));
+    setText("#metric-count", latest ? nf(latest.scheme_count) : "—");
+    setText(
+      "#metric-breadth",
+      latest ? `${nf(latest.up_count)} up / ${nf(latest.down_count)} down` : "Breadth —"
+    );
+    setText(
+      "#metric-avg-date",
+      latest ? `As of ${latest.date}` : "Latest available date"
+    );
+    const avgEl = $("#metric-avg");
+    if (avgEl && latest) avgEl.className = latest.avg_change >= 0 ? "up" : "down";
+
+    fillTable(
+      "#movement-rows",
+      rows.slice(-40).reverse(),
+      [
+        (row) => cell(row.date),
+        (row) => cell(pct(row.avg_change), row.avg_change >= 0 ? "up" : "down"),
+        (row) => cell(pct(row.median_change)),
+        (row) => cell(pct(row.min_change), "down"),
+        (row) => cell(pct(row.max_change), "up"),
+        (row) => cell(pct(row.stddev_change)),
+        (row) => cell(`${row.up_count} / ${row.down_count}`),
+        (row) => cell(nf(row.scheme_count)),
+        (row) => cell(typeof row.index_value === "number" ? row.index_value.toFixed(2) : "—"),
+      ],
+      9,
+      "No movement rows match this selection."
+    );
+    drawSparkline(rows);
+  }
+
+  function renderRanking(rows) {
+    const sorted = (rows || []).slice().sort((a, b) => b.avg_change - a.avg_change);
+    fillTable(
+      "#ranking-rows",
+      sorted.slice(0, 20),
+      [
+        (row) => cell(row.group),
+        (row) => cell(pct(row.avg_change), row.avg_change >= 0 ? "up" : "down"),
+        (row) => cell(pct(row.min_change)),
+        (row) => cell(pct(row.max_change)),
+        (row) => cell(nf(row.scheme_count)),
+        (row) => cell(`${row.up_count} / ${row.down_count}`),
+        (row) => cell(row.best_scheme_name || "—"),
+      ],
+      7,
+      "No ranking available for this date."
+    );
+  }
+
+  async function setupAnalytics() {
+    const levelSelect = $("#movement-level");
+    const groupSelect = $("#movement-group");
+    if (!levelSelect || !groupSelect) return;
+
+    const notice = $("#analytics-notice");
+    let summary = null;
+    let staticMovement = null;
+
+    function showNotice(message) {
+      if (!notice) return;
+      notice.textContent = message;
+      notice.hidden = false;
+    }
+
+    async function loadSummary() {
+      try {
+        const { data } = await analyticsFetch(
+          "/analytics/summary",
+          "/analytics/summary.json"
+        );
+        summary = data;
+        setText("#coverage-schemes", nf(summary.schemeCount || 0));
+        setText("#coverage-families", nf(summary.familyCount || 0));
+        setText("#coverage-categories", nf((summary.groups || {}).category || 0));
+        setText("#coverage-days", nf(summary.dateCount || 0));
+        setText(
+          "#analytics-coverage",
+          `${nf(summary.dateCount || 0)} dates with movement data · latest ${summary.latestDate || "—"}. Generated ${summary.generatedAt || "—"}.`
+        );
+        const latestIso = isoDate(summary.latestDate);
+        const end = $("#movement-end");
+        const start = $("#movement-start");
+        if (end && !end.value && latestIso) end.value = latestIso;
+        if (start && !start.value && latestIso) {
+          const from = new Date(`${latestIso}T00:00:00Z`);
+          from.setUTCDate(from.getUTCDate() - 30);
+          start.value = from.toISOString().slice(0, 10);
+        }
+        if (notice) notice.hidden = true;
+      } catch {
+        showNotice(
+          "Analytics have not been calculated yet. Run 'python scripts/calc_analytics.py' to populate this page."
+        );
+      }
+    }
+
+    async function loadGroups() {
+      const level = levelSelect.value;
+      const previous = groupSelect.value;
+      groupSelect.replaceChildren();
+      groupSelect.add(new Option(level === "all" ? "All schemes" : "Latest-day ranking", level === "all" ? "All schemes" : ""));
+      if (level === "all") {
+        groupSelect.value = "All schemes";
+        return;
+      }
+      try {
+        const { data } = await analyticsFetch(
+          "/analytics/groups",
+          "/analytics/groups.json",
+          { level }
+        );
+        const groups = Array.isArray(data) ? data : data[level] || [];
+        groups.forEach((group) => {
+          groupSelect.add(new Option(`${group.name} (${nf(group.schemeCount)} schemes)`, group.name));
+        });
+        const names = groups.map((group) => group.name);
+        groupSelect.value = names.includes(previous)
+          ? previous
+          : names.includes("Information Technology")
+            ? "Information Technology"
+            : names[0] || "";
+      } catch {
+        showNotice("Group list could not be loaded from the analytics API.");
+      }
+    }
+
+    async function loadMovement() {
+      const level = levelSelect.value;
+      const group = groupSelect.value;
+      const start = ($("#movement-start") || {}).value || "";
+      const end = ($("#movement-end") || {}).value || "";
+      const params = { level, limit: 2000, minSchemes: 3 };
+      if (group) params.group = group;
+      if (start) params.startDate = start;
+      if (end) params.endDate = end;
+      try {
+        const { data, source } = await analyticsFetch(
+          "/analytics/movement",
+          "/analytics/movement.json",
+          params
+        );
+        let rows = [];
+        let ranking = [];
+        if (source === "static") {
+          if (!staticMovement) staticMovement = Array.isArray(data) ? data : [];
+          rows = staticMovement.filter(
+            (row) =>
+              row.level === level &&
+              (!group || row.group === group) &&
+              (!start || isoDate(row.date) >= start) &&
+              (!end || isoDate(row.date) <= end)
+          );
+          const latestByGroup = new Map();
+          staticMovement.forEach((row) => {
+            if (row.level !== level || row.scheme_count < 3) return;
+            const current = latestByGroup.get(row.group);
+            if (!current || isoDate(row.date) > isoDate(current.date)) {
+              latestByGroup.set(row.group, row);
+            }
+          });
+          ranking = Array.from(latestByGroup.values());
+        } else {
+          rows = data.data || [];
+          ranking = data.ranking || [];
+        }
+        rows.sort((a, b) => isoDate(a.date).localeCompare(isoDate(b.date)));
+        renderMovement(rows);
+        renderRanking(ranking);
+      } catch {
+        showNotice("Movement data could not be loaded from the analytics API.");
+      }
+    }
+
+    levelSelect.addEventListener("change", () => loadGroups().then(loadMovement));
+    groupSelect.addEventListener("change", loadMovement);
+    ["#movement-start", "#movement-end"].forEach((selector) => {
+      const input = $(selector);
+      if (input) input.addEventListener("change", loadMovement);
+    });
+    const refresh = $("#movement-refresh");
+    if (refresh) refresh.addEventListener("click", loadMovement);
+
+    await loadSummary();
+    await loadGroups();
+    await loadMovement();
+  }
+
   /* -------------------------------------------------------------------- init */
   document.addEventListener("DOMContentLoaded", () => {
     setupNav();
@@ -706,5 +1013,6 @@
     setupDocs();
     setupExplorer();
     setupStatus();
+    setupAnalytics();
   });
 })();

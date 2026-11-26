@@ -33,6 +33,10 @@ TAGS_METADATA = [
     {"name": "NAV", "description": "Latest and historical net asset values."},
     {"name": "Reference", "description": "Fund houses and categories."},
     {"name": "Meta", "description": "Dataset freshness, statistics and health."},
+    {
+        "name": "Analytics",
+        "description": "Daily NAV movement by theme, category, fund type and AMC.",
+    },
 ]
 
 DESCRIPTION = """
@@ -164,6 +168,9 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
                 "categories": f"{settings.api_prefix}/categories",
                 "compare": f"{settings.api_prefix}/compare",
                 "data-sources": f"{settings.api_prefix}/data-sources",
+                "analytics-summary": f"{settings.api_prefix}/analytics/summary",
+                "analytics-groups": f"{settings.api_prefix}/analytics/groups?level=theme",
+                "analytics-movement": f"{settings.api_prefix}/analytics/movement?level=theme",
             },
         }
 
@@ -213,6 +220,10 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
     @app.get("/status", include_in_schema=False)
     def status_page():
         return page("status.html")
+
+    @app.get("/analytics", include_in_schema=False)
+    def analytics_page():
+        return page("analytics.html")
 
     if (web_dir / "assets").is_dir():
         app.mount("/assets", StaticFiles(directory=web_dir / "assets"), name="assets")

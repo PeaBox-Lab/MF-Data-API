@@ -11,6 +11,13 @@ from collections.abc import Callable
 from datetime import date, timedelta
 from pathlib import Path
 
+from .analytics import (
+    LEVELS,
+    all_movement_payload,
+    groups_payload,
+    has_analytics,
+    summary_payload,
+)
 from .config import Settings, load_settings
 from .dates import to_api_date, utc_now_iso
 from .store import Store
@@ -209,6 +216,7 @@ def export_static(
     out_dir: Path | str = "public",
     history_days: int | None = None,
     include_latest: bool = True,
+    analytics_days: int | None = 365,
     log_fn: Callable[[str], None] | None = None,
 ) -> dict:
     """Write the full static API tree under ``out_dir/api/v1``."""
@@ -307,6 +315,9 @@ def export_static(
                 "health": "health.json",
                 "movers": "movers.json",
                 "data_sources": "data-sources.json",
+                "analytics_summary": "analytics/summary.json",
+                "analytics_groups": "analytics/groups.json",
+                "analytics_movement": "analytics/movement.json",
             },
         },
         compact=False,
@@ -331,6 +342,31 @@ def export_static(
     # Curated directory of free mutual fund data APIs worldwide
     _write_json(api_dir / "data-sources.json", DATA_SOURCES, compact=False)
 
+    # Pre-computed daily movement analytics (when calc_analytics.py has run).
+    analytics_count = 0
+    with store.connect(readonly=True) as conn:
+        if has_analytics(conn):
+            analytics_dir = api_dir / "analytics"
+            start_iso = (
+                (date.today() - timedelta(days=analytics_days)).isoformat()
+                if analytics_days
+                else None
+            )
+            _write_json(
+                analytics_dir / "summary.json", summary_payload(conn), compact=False
+            )
+            _write_json(
+                analytics_dir / "groups.json",
+                {level: groups_payload(conn, level) for level in LEVELS},
+                compact=False,
+            )
+            movement = all_movement_payload(conn, start=start_iso)
+            _write_json(analytics_dir / "movement.json", movement)
+            analytics_count = len(movement)
+            log_fn(f"  analytics/movement.json: {analytics_count:,} group/date rows")
+        else:
+            log_fn("  analytics: skipped (run scripts/calc_analytics.py to enable)")
+
     log_fn(f"Exported {written:,} scheme histories in {out_dir}")
     return {
         "out_dir": str(out_dir),
@@ -339,5 +375,6 @@ def export_static(
         "latest_rows": len(latest),
         "movers": len(movers),
         "data_sources": len(DATA_SOURCES),
+        "analytics_rows": analytics_count,
         "generated_at": generated_at,
     }

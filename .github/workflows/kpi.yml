@@ -16,7 +16,7 @@ on:
         default: "1095"
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 concurrency:
@@ -38,6 +38,17 @@ jobs:
           python-version: "3.12"
           cache: pip
 
+      - name: Restore NAV database
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            data/mfdata.db
+            data/mfdata.db-wal
+            data/mfdata.db-shm
+          key: mfdata-db-${{ github.run_id }}
+          restore-keys: |
+            mfdata-db-
+
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
 
@@ -55,6 +66,7 @@ jobs:
         run: |
           set -euo pipefail
           python scripts/calc_kpis.py
+          python scripts/calc_analytics.py
 
       - name: Export static API and documentation site
         run: |

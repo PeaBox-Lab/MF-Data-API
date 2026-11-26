@@ -71,6 +71,12 @@ jobs:
           if [ "${FORCE_FULL}" = "true" ]; then EXTRA="--full"; fi
           python -m pipeline sync --bootstrap-days "${BOOTSTRAP_DAYS}" ${EXTRA}
 
+      - name: Recalculate KPI and analytics tables
+        run: |
+          set -euo pipefail
+          python scripts/calc_kpis.py
+          python scripts/calc_analytics.py
+
       - name: Export static API and documentation site
         run: |
           set -euo pipefail

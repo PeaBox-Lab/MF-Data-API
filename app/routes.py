@@ -2,11 +2,19 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Path, Query
 
+from pipeline.analytics import (
+    groups_payload,
+    has_analytics,
+    movement_payload,
+    summary_payload,
+)
 from pipeline.dates import parse_flexible_date, to_api_date, to_iso
 from pipeline.export_static import DATA_SOURCES
 from pipeline.store import Store
@@ -43,6 +51,48 @@ def _ensure_data(store: Store) -> None:
             "(python -m pipeline sync).",
             "UNAVAILABLE",
         )
+
+
+@contextmanager
+def _analytics_connection(store: Store) -> Iterator:
+    """Open a read-only connection, failing clearly if analytics are missing."""
+    with store.connect(readonly=True) as conn:
+        if not has_analytics(conn):
+            raise ApiError(
+                503,
+                "Analytics tables are not available yet. Run "
+                "'python scripts/calc_analytics.py' first.",
+                "UNAVAILABLE",
+            )
+        yield conn
+
+
+def _kpi_row(store: Store, table: str, column: str, value: object) -> dict:
+    if table not in {
+        "scheme_kpis",
+        "fund_house_kpis",
+        "category_kpis",
+        "type_kpis",
+    }:
+        raise ValueError(f"Unknown KPI table: {table}")
+    with store.connect(readonly=True) as conn:
+        names = {
+            row[0]
+            for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }
+        if table not in names:
+            raise ApiError(
+                503,
+                f"KPI table {table} is not available. Run 'python scripts/calc_kpis.py'.",
+                "UNAVAILABLE",
+            )
+        row = conn.execute(
+            f"SELECT * FROM {table} WHERE {column} = ?", (value,)
+        ).fetchone()
+        if row is None:
+            raise ApiError(404, f"KPI {value!r} not found in {table}", "NOT_FOUND")
+        cols = [column[1] for column in conn.execute(f"PRAGMA table_info({table})")]
+        return dict(zip(cols, row, strict=False))
 
 
 def _meta_payload(meta: dict) -> dict:
@@ -425,6 +475,82 @@ def data_sources():
 
 
 # ============================================================
+# Analytics Endpoints
+# ============================================================
+
+AnalyticsLevel = Annotated[
+    Literal["theme", "category", "type", "fund_house", "all"],
+    Query(description="Grouping level for the movement data"),
+]
+
+
+@router.get(
+    "/analytics/summary",
+    response_model=dict,
+    summary="Analytics dataset overview",
+    tags=["Analytics"],
+)
+def analytics_summary(store: StoreDep):
+    """Return coverage, freshness and methodology notes for analytics tables."""
+    with _analytics_connection(store) as conn:
+        return summary_payload(conn)
+
+
+@router.get(
+    "/analytics/groups",
+    response_model=list[dict],
+    summary="Available analytics groups",
+    tags=["Analytics"],
+)
+def analytics_groups(store: StoreDep, level: AnalyticsLevel = "theme"):
+    """List the groups available at a level (themes, categories, AMCs, ...)."""
+    with _analytics_connection(store) as conn:
+        return groups_payload(conn, level)
+
+
+@router.get(
+    "/analytics/movement",
+    response_model=dict,
+    summary="Daily NAV movement by theme, category, type or fund house",
+    description=(
+        "Average, median, min and max daily NAV change, dispersion and breadth "
+        "for a group across dates. Without `group`, returns the latest-day "
+        "ranking of all groups at the chosen level. Direct/Regular and "
+        "Growth/IDCW plan variants are collapsed to one canonical plan."
+    ),
+    tags=["Analytics"],
+)
+def analytics_movement(
+    store: StoreDep,
+    level: AnalyticsLevel = "theme",
+    group: Annotated[
+        str | None,
+        Query(max_length=200, description="Group name; omit for a latest-day ranking"),
+    ] = None,
+    startDate: Annotated[str | None, Query(description="Inclusive start date")] = None,
+    endDate: Annotated[str | None, Query(description="Inclusive end date")] = None,
+    limit: Annotated[int, Query(ge=1, le=2000)] = 100,
+    minSchemes: Annotated[
+        int, Query(ge=1, le=10000, description="Minimum schemes in a ranked group")
+    ] = 3,
+):
+    start, end = _date_range(startDate, endDate)
+    with _analytics_connection(store) as conn:
+        try:
+            return movement_payload(
+                conn,
+                level,
+                group,
+                start=start,
+                end=end,
+                limit=limit,
+                min_schemes=minSchemes,
+            )
+        except ValueError as exc:
+            raise ApiError(400, str(exc), "BAD_REQUEST") from exc
+
+
+# ============================================================
 # KPI Endpoints
 # ============================================================
 
@@ -434,17 +560,9 @@ def data_sources():
     summary="Scheme-level KPIs",
     tags=["KPI"],
 )
-def scheme_kpi(
-    code: int,
-):
+def scheme_kpi(code: int, store: StoreDep):
     """Return KPIs for a specific scheme."""
-    from pipeline.store import get_connection
-    conn = get_connection()
-    row = conn.execute("SELECT * FROM scheme_kpis WHERE scheme_code=?", (code,)).fetchone()
-    if not row:
-        raise ApiError(404, f"Scheme KPI {code} not found", "NOT_FOUND")
-    cols = [c[1] for c in conn.execute("PRAGMA table_info(scheme_kpis)").fetchall()]
-    return dict(zip(cols, row, strict=False))
+    return _kpi_row(store, "scheme_kpis", "scheme_code", code)
 
 
 @router.get(
@@ -453,17 +571,9 @@ def scheme_kpi(
     summary="Fund-house-level KPIs",
     tags=["KPI"],
 )
-def fund_house_kpi(
-    name: str,
-):
+def fund_house_kpi(name: str, store: StoreDep):
     """Return KPIs for a specific fund house."""
-    from pipeline.store import get_connection
-    conn = get_connection()
-    row = conn.execute("SELECT * FROM fund_house_kpis WHERE fund_house=?", (name,)).fetchone()
-    if not row:
-        raise ApiError(404, f"Fund house KPI {name!r} not found", "NOT_FOUND")
-    cols = [c[1] for c in conn.execute("PRAGMA table_info(fund_house_kpis)").fetchall()]
-    return dict(zip(cols, row, strict=False))
+    return _kpi_row(store, "fund_house_kpis", "fund_house", name)
 
 
 @router.get(
@@ -472,17 +582,9 @@ def fund_house_kpi(
     summary="Category-level KPIs",
     tags=["KPI"],
 )
-def category_kpi(
-    cat: str,
-):
+def category_kpi(cat: str, store: StoreDep):
     """Return KPIs for a specific category."""
-    from pipeline.store import get_connection
-    conn = get_connection()
-    row = conn.execute("SELECT * FROM category_kpis WHERE category=?", (cat,)).fetchone()
-    if not row:
-        raise ApiError(404, f"Category KPI {cat!r} not found", "NOT_FOUND")
-    cols = [c[1] for c in conn.execute("PRAGMA table_info(category_kpis)").fetchall()]
-    return dict(zip(cols, row, strict=False))
+    return _kpi_row(store, "category_kpis", "category", cat)
 
 
 @router.get(
@@ -491,14 +593,6 @@ def category_kpi(
     summary="Fund-type-level KPIs (equity/debt/hybrid)",
     tags=["KPI"],
 )
-def type_kpi(
-    ftype: str,
-):
+def type_kpi(ftype: str, store: StoreDep):
     """Return KPIs for a fund type."""
-    from pipeline.store import get_connection
-    conn = get_connection()
-    row = conn.execute("SELECT * FROM type_kpis WHERE fund_type=?", (ftype,)).fetchone()
-    if not row:
-        raise ApiError(404, f"Type KPI {ftype!r} not found", "NOT_FOUND")
-    cols = [c[1] for c in conn.execute("PRAGMA table_info(type_kpis)").fetchall()]
-    return dict(zip(cols, row, strict=False))
+    return _kpi_row(store, "type_kpis", "fund_type", ftype)

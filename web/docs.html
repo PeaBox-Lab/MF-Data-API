@@ -89,6 +89,8 @@
         <a href="#endpoint-stats">Statistics</a>
         <a href="#endpoint-health">Health</a>
         <a href="#endpoint-data-sources">Data sources directory</a>
+        <a href="#endpoint-analytics-summary">Analytics overview</a>
+        <a href="#endpoint-analytics-movement">Daily movement</a>
 
         <h4>Guides</h4>
         <a href="#response-format">Response format</a>
@@ -644,6 +646,83 @@ X-RateLimit-Remaining: 0
           </div>
         </section>
 
+        <section class="doc-section" id="endpoint-analytics-summary" data-doc-section>
+          <h2>Analytics overview</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/analytics/summary</code></div>
+            <div class="endpoint-body">
+              <p>Coverage, freshness and methodology notes for the pre-computed analytics tables.</p>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/analytics/summary"</code></pre>
+              <pre><code class="language-json">{
+  "generatedAt": "2026-11-26T09:00:00+00:00",
+  "earliestDate": "16-11-2026",
+  "latestDate": "20-11-2026",
+  "dateCount": 4,
+  "schemeCount": 14000,
+  "familyCount": 8000,
+  "groups": { "theme": 8, "category": 101, "type": 3, "fund_house": 55, "all": 1 }
+}</code></pre>
+              <p class="text-sm muted">Static mode: <code>/api/v1/analytics/summary.json</code>. Analytics tables are built by <code>python scripts/calc_analytics.py</code>.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="endpoint-analytics-movement" data-doc-section>
+          <h2>Daily movement</h2>
+          <div class="endpoint-card">
+            <div class="endpoint-head"><span class="method get">GET</span><code>/api/v1/analytics/movement</code></div>
+            <div class="endpoint-body">
+              <p>
+                Daily NAV change statistics for a group: average, median, min, max,
+                dispersion (σ), breadth and an equal-weighted index. Omit
+                <code>group</code> to get a ranking of each group's most recent day
+                (groups with fewer than three schemes are excluded by default).
+              </p>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Parameter</th><th>Default</th><th>Description</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>level</code></td><td><code>theme</code></td><td><code>theme</code>, <code>category</code>, <code>type</code>, <code>fund_house</code> or <code>all</code>.</td></tr>
+                    <tr><td><code>group</code></td><td>—</td><td>Exact group name, e.g. <code>Information Technology</code>.</td></tr>
+                    <tr><td><code>startDate</code>, <code>endDate</code></td><td>—</td><td>Inclusive date filters (YYYY-MM-DD or DD-MM-YYYY).</td></tr>
+                    <tr><td><code>limit</code></td><td><code>100</code></td><td>Maximum number of rows.</td></tr>
+                    <tr><td><code>minSchemes</code></td><td><code>3</code></td><td>Minimum schemes required for a group to appear in the ranking.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <pre><code class="language-bash">curl "https://api.example.com/api/v1/analytics/movement?level=theme&amp;group=Information%20Technology"</code></pre>
+              <pre><code class="language-json">{
+  "level": "theme",
+  "group": "Information Technology",
+  "latestDate": "19-11-2026",
+  "count": 3,
+  "data": [
+    {
+      "date": "19-11-2026", "scheme_count": 8,
+      "avg_change": -0.4346, "median_change": -0.4099,
+      "min_change": -0.7535, "max_change": 0.0965,
+      "stddev_change": 0.31, "up_count": 2, "down_count": 6,
+      "best_scheme_name": "Invesco India Technology Fund - Direct Plan - Growth",
+      "index_value": 99.56
+    }
+  ],
+  "ranking": []
+}</code></pre>
+              <p>
+                NAV is an end-of-day net asset value, not a traded price. Direct/Regular
+                and Growth/IDCW variants are collapsed to one canonical plan before
+                aggregation. Themes are inferred from scheme names because AMFI does
+                not publish a sector field.
+              </p>
+              <p class="text-sm muted">
+                Static mode: filter <code>/api/v1/analytics/movement.json</code> by
+                <code>level</code>, <code>group</code> and <code>date</code>. See the
+                <a href="analytics.html">Analytics page</a> for a live dashboard.
+              </p>
+            </div>
+          </div>
+        </section>
+
         <section class="doc-section" id="response-format" data-doc-section>
           <h2>Response format</h2>
           <p>History responses always use the same envelope:</p>
@@ -709,6 +788,9 @@ X-RateLimit-Remaining: 0
                 <tr><td><code>/api/v1/stats</code></td><td><code>/api/v1/stats.json</code></td></tr>
                 <tr><td><code>/api/v1/movers/latest</code></td><td><code>/api/v1/movers.json</code></td></tr>
                 <tr><td><code>/api/v1/data-sources</code></td><td><code>/api/v1/data-sources.json</code></td></tr>
+                <tr><td><code>/api/v1/analytics/summary</code></td><td><code>/api/v1/analytics/summary.json</code></td></tr>
+                <tr><td><code>/api/v1/analytics/groups</code></td><td><code>/api/v1/analytics/groups.json</code></td></tr>
+                <tr><td><code>/api/v1/analytics/movement</code></td><td>Filter <code>/api/v1/analytics/movement.json</code></td></tr>
                 <tr><td><code>/api/v1/nav/{date}</code></td><td>Not available (use per-scheme files)</td></tr>
               </tbody>
             </table>

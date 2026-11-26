@@ -15,8 +15,15 @@ import argparse
 import logging
 import math
 import sqlite3
+import sys
 from datetime import date, timedelta
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from pipeline.config import load_settings  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -25,8 +32,8 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Recalculate KPI tables from NAV data.")
     parser.add_argument(
         "--db-path",
-        default="pipeline/mfapi.db",
-        help="Path to the SQLite database (default: pipeline/mfapi.db)",
+        default=None,
+        help="SQLite database (default: MFDATA_DB or data/mfdata.db)",
     )
     return parser.parse_args()
 
@@ -352,7 +359,7 @@ def _write_kpis(conn: sqlite3.Connection, tables: dict[str, list[dict]]) -> None
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     args = _parse_args()
-    db_path = Path(args.db_path)
+    db_path = Path(args.db_path) if args.db_path else load_settings().db_path
     if not db_path.exists():
         log.error("Database not found: %s", db_path)
         raise SystemExit(1)
